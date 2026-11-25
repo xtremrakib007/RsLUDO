@@ -8,6 +8,37 @@ Nothing in the offline game talks to a network. This is the plan we will review 
 - **No real-money betting or gambling.** No paid currency that can be won or lost.
 - **No secrets in the client or the repository.** API keys and service credentials live on the server or in CI secrets.
 
+## Agreed requirements (owner decisions, 2026-11-26)
+
+### Login
+
+| Method | Decision | Notes |
+| --- | --- | --- |
+| Guest | Yes (exists offline) | Play instantly; can later be linked to Google or Facebook without losing progress. |
+| Google / Google Play Games | Yes | Free. Play Games also offers friends (with consent), achievements and leaderboards. |
+| Facebook | Yes | Free. Needs Meta app review for the `user_friends` permission. |
+| Phone number (SMS / WhatsApp) | Not for now | Per-message cost. Can be added later. |
+| TikTok | Not for now | Needs TikTok app approval and custom server code. |
+| Apple | Only if an iPhone version is released | Apple requires it when other social logins are offered on iOS. |
+
+One account can have several linked logins.
+
+### Friends
+
+- Facebook friends who **also play** the game (the only list Facebook allows) are added as in-game friends automatically.
+- Google Play Games friends can be added the same way when the player consents.
+- Manual friend requests by player ID/room code remain available.
+
+### Pause
+
+- **Offline:** the game can be paused (current behaviour).
+- **Online:** the game never pauses. The menu opens over a running match (sound, chat, leave). A turn timer runs on the server; after a missed turn or a disconnect, the server waits a short grace period, then plays an automatic move or skips the turn. A reconnecting player rejoins the same match.
+
+### Match history
+
+- The server stores every online match per user: date, mode, players, finishing places, captures.
+- History is shown from the user's account on any device and cannot be edited by the client.
+
 ## Why the offline code is ready for this
 
 - `LudoRulesConfig.to_dict()/from_dict()` lets the server send the agreed rules.
