@@ -42,11 +42,6 @@ func _shot(screen_id: String, out_dir: String, setup: Callable, file_name: Strin
 	var path := out_dir.path_join((file_name if not file_name.is_empty() else screen_id) + ".png")
 	image.save_png(path)
 	print("saved ", path)
-	if OS.get_environment("SCREENSHOT_LOG") == "1":
-		# Small JPEG copy in the log, for reviewers who cannot download artifacts.
-		var small := image.duplicate() as Image
-		small.resize(image.get_width() / 2, image.get_height() / 2, Image.INTERPOLATE_BILINEAR)
-		print("SHOT %s %s" % [path.get_file().get_basename(), Marshalls.raw_to_base64(small.save_jpg_to_buffer(0.7))])
 	screen.queue_free()
 	await get_tree().process_frame
 
