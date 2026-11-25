@@ -27,6 +27,10 @@ The runner prints `PASS`/`FAIL` per test and exits with code 1 if anything fails
 
 The tests do not need any add-on; the runner is `tests/test_runner.gd`. Add a suite by creating `tests/unit/test_<name>.gd` that extends `res://tests/test_case.gd` and has `test_*` methods.
 
+## Google Play (automatic updates)
+
+See `docs/PLAY_STORE_SETUP.md`: every change merged into `main` is uploaded to Google Play internal testing, and testers' phones update automatically.
+
 ## Android test APK
 
 Every push builds a debug APK (`.github/workflows/android.yml`). Open the run under **Actions**, download `RsLUDO-debug-apk`, unzip and install it on the phone. Debug builds use a throwaway key; signing keys and passwords must **never** be committed (`.gitignore` excludes `*.keystore`, `*.jks` and `export_credentials.cfg`). A signed release build is part of Phase 5.
