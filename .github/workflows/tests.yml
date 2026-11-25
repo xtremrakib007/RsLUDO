@@ -60,7 +60,7 @@ jobs:
       - name: Render screenshots
         run: |
           mkdir -p screenshots
-          SCREENSHOT_DIR="$PWD/screenshots" timeout 300 xvfb-run -a -s "-screen 0 1280x1024x24" \
+          SCREENSHOT_DIR="$PWD/screenshots" SCREENSHOT_LOG=1 timeout 300 xvfb-run -a -s "-screen 0 1280x1024x24" \
             /tmp/godot/godot --path . --rendering-driver opengl3 --resolution 720x1600 res://tools/screenshots.tscn
           ls -la screenshots
       - name: Upload screenshots
