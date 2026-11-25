@@ -11,7 +11,7 @@ Current status: **Phase 1 (Foundation)**. See `docs/DEVELOPMENT_PLAN.md`.
 ## Open the project
 
 1. Install Godot **4.4.1** (standard build, not .NET): https://godotengine.org/download
-2. In the Godot Project Manager choose **Import** and pick `ludo-social/project.godot`.
+2. In the Godot Project Manager choose **Import** and pick `project.godot` in this repository.
 3. Press **F5** to run. The window opens at phone proportions (portrait, 720 x 1280 design size).
 
 Escape on desktop acts like the Android back button.
@@ -19,11 +19,11 @@ Escape on desktop acts like the Android back button.
 ## Run the tests
 
 ```sh
-godot --headless --path ludo-social --import
-godot --headless --path ludo-social res://tests/test_runner.tscn
+godot --headless --path . --import
+godot --headless --path . res://tests/test_runner.tscn
 ```
 
-The runner prints `PASS`/`FAIL` per test and exits with code 1 if anything fails. GitHub Actions runs the same commands on every push that touches `ludo-social/` (`.github/workflows/ludo-social.yml`).
+The runner prints `PASS`/`FAIL` per test and exits with code 1 if anything fails. GitHub Actions runs the same commands on every push and pull request (`.github/workflows/tests.yml`).
 
 The tests do not need any add-on; the runner is `tests/test_runner.gd`. Add a suite by creating `tests/unit/test_<name>.gd` that extends `res://tests/test_case.gd` and has `test_*` methods.
 
