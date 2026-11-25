@@ -1,0 +1,47 @@
+; Engine configuration file.
+; Edit through the Godot editor (Project > Project Settings) where possible.
+
+config_version=5
+
+[application]
+
+config/name="Ludo Social"
+config/description="Family-friendly Ludo with human-like pawns and a Snake Ludo mode."
+config/version="0.1.0"
+run/main_scene="res://scenes/screens/splash.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+config/quit_on_go_back=false
+boot_splash/bg_color=Color(0.051, 0.075, 0.2, 1)
+boot_splash/show_image=false
+config/icon="res://icon.svg"
+
+[autoload]
+
+AppState="*res://scripts/autoload/app_state.gd"
+SceneRouter="*res://scripts/autoload/scene_router.gd"
+UiTheme="*res://scripts/autoload/ui_theme.gd"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/size/window_width_override=405
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[gui]
+
+common/drop_mouse_on_gui_input_disabled=true
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.051, 0.075, 0.2, 1)
