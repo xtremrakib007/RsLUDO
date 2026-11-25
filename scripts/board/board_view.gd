@@ -187,8 +187,8 @@ func _layout_pawns() -> void:
 			var radius := cs * 0.52
 			if count > 1:
 				var angle := TAU * j / count - PI / 2.0
-				offset = Vector2(cos(angle), sin(angle)) * cs * 0.24
-				radius = cs * 0.38
+				offset = Vector2(cos(angle), sin(angle)) * cs * 0.26
+				radius = cs * 0.42
 			node.position = grid_to_local(point) + offset + _pawn_offset()
 			node.radius = radius
 

@@ -52,8 +52,9 @@ func build() -> void:
 	board.pawn_tapped.connect(_on_pawn_tapped)
 	content.add_child(board)
 	content.add_child(_corner_row(3, 2))
-	content.add_child(UIKit.spacer())
 	content.add_child(_dice_panel())
+	# Spare height on tall phones goes equally above and below the play area.
+	content.add_child(UIKit.spacer())
 
 	_build_banner()
 	_build_pause_menu()

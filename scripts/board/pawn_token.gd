@@ -18,6 +18,8 @@ var highlighted: bool = false:
 	set(value):
 		highlighted = value
 		set_process(value)
+		if not value:
+			lift = 0.0
 		queue_redraw()
 ## Height above the ground while hopping, in pixels.
 var lift: float = 0.0
@@ -28,6 +30,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	# Movable pawns bounce gently so players see which ones they can tap.
+	lift = absf(sin(Time.get_ticks_msec() / 220.0)) * radius * 0.3
 	queue_redraw()
 
 
@@ -45,8 +49,10 @@ func _draw() -> void:
 
 	if highlighted:
 		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 160.0)
-		draw_circle(Vector2(0, r * 0.2), r * (1.0 + 0.12 * pulse), Color(1, 1, 0.75, 0.35))
-		draw_arc(Vector2(0, r * 0.2), r * (1.0 + 0.12 * pulse), 0.0, TAU, 40, Color(1, 1, 1, 0.95), maxf(2.0, r * 0.12), true)
+		var ring := r * (1.05 + 0.15 * pulse)
+		draw_circle(Vector2(0, r * 0.25), ring, Color(Palette.ACCENT, 0.4))
+		draw_arc(Vector2(0, r * 0.25), ring, 0.0, TAU, 40, Palette.ACCENT, maxf(3.0, r * 0.18), true)
+		draw_arc(Vector2(0, r * 0.25), ring + r * 0.12, 0.0, TAU, 40, Color(1, 1, 1, 0.8), maxf(1.5, r * 0.06), true)
 
 	# Ground shadow (squashed circle), smaller while in the air.
 	var shadow_scale := 1.0 - clampf(lift / (r * 1.4), 0.0, 0.5)
