@@ -9,8 +9,14 @@ const SCREENS := {
 	"player_select": "res://scenes/screens/player_select.tscn",
 	"lobby": "res://scenes/screens/lobby.tscn",
 	"game": "res://scenes/screens/game.tscn",
+	"result": "res://scenes/screens/result.tscn",
 }
 const FADE_TIME := 0.16
+
+## Last screen requested (used by tests).
+var last_requested: String = ""
+## Tests set this so a screen change does not replace the test runner.
+var navigation_enabled: bool = true
 
 var _fade: ColorRect
 var _busy := false
@@ -32,6 +38,9 @@ func goto(screen_id: String) -> void:
 		return
 	if not SCREENS.has(screen_id):
 		push_error("Unknown screen: %s" % screen_id)
+		return
+	last_requested = screen_id
+	if not navigation_enabled:
 		return
 	_busy = true
 	_fade.mouse_filter = Control.MOUSE_FILTER_STOP
