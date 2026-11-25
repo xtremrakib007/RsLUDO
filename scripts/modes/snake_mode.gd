@@ -14,3 +14,7 @@ func _init() -> void:
 
 func default_rules() -> LudoRulesConfig:
 	return LudoRulesConfig.snake()
+
+
+func snake_layout() -> SnakeLayout:
+	return SnakeLayout.standard()

@@ -24,6 +24,8 @@ const STAR := Color("b9b19b")
 
 const SEAT_COLORS := [Color("e8413c"), Color("2fb457"), Color("f6c026"), Color("2f7fe0")]
 const SEAT_NAMES := ["Red", "Green", "Yellow", "Blue"]
+## Snake colours on the Snake Ludo board (cartoon, friendly).
+const SNAKE_COLORS := [Color("3dbb6b"), Color("8e5bd6"), Color("f08a24"), Color("1aa3a3")]
 ## Placeholder character skin tones, one per seat, for visual variety.
 const SKIN_TONES := [Color("f2c7a5"), Color("8d5a3b"), Color("e0ac69"), Color("c68642")]
 
@@ -34,6 +36,10 @@ static func seat_color(seat: int) -> Color:
 
 static func seat_name(seat: int) -> String:
 	return SEAT_NAMES[seat]
+
+
+static func snake_color(index: int) -> Color:
+	return SNAKE_COLORS[posmod(index, SNAKE_COLORS.size())]
 
 
 static func skin_tone(seat: int) -> Color:

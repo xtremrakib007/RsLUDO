@@ -13,3 +13,8 @@ var accent: Color = Color.WHITE
 
 func default_rules() -> LudoRulesConfig:
 	return LudoRulesConfig.classic()
+
+
+## Snakes on the board for this mode, or null for none.
+func snake_layout() -> SnakeLayout:
+	return null
