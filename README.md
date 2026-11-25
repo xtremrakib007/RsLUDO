@@ -1,4 +1,4 @@
-# Ludo Social
+# RS Ludo
 
 A family-friendly Ludo game for Android, built with **Godot 4** and **GDScript**. All tools and libraries are free and open source.
 

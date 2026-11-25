@@ -12,7 +12,7 @@ func build() -> void:
 	_dice.custom_minimum_size = Vector2(170, 170)
 	holder.add_child(_dice)
 	content.add_child(holder)
-	content.add_child(UIKit.title("Ludo Social", 80, Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
+	content.add_child(UIKit.title("RS Ludo", 80, Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
 	content.add_child(UIKit.label("Roll. Race. Have fun together.", 30, Palette.TEXT_MUTED, HORIZONTAL_ALIGNMENT_CENTER))
 	_play_intro()
 

@@ -1,0 +1,176 @@
+name: Google Play internal testing
+
+# Builds a release-signed Android App Bundle for every push to main and uploads
+# it to the Play Console "Internal testing" track. Testers' phones then update
+# the app automatically through the Play Store.
+#
+# Needs these repository secrets (Settings > Secrets and variables > Actions):
+#   ANDROID_UPLOAD_KEYSTORE_BASE64    upload key (.keystore file, base64)
+#   ANDROID_UPLOAD_KEYSTORE_PASSWORD  its password
+#   ANDROID_UPLOAD_KEY_ALIAS          its alias (e.g. upload)
+#   PLAY_SERVICE_ACCOUNT_JSON         Google service account key with release access
+# Without the keystore secrets the job only prints a notice. Without the
+# service account it still builds the AAB for a manual upload.
+# Optional repository variable PLAY_RELEASE_STATUS: "draft" until the first
+# release has been rolled out by hand, then remove it (default "completed").
+# See docs/PLAY_STORE_SETUP.md.
+
+# On other branches it only checks that the bundle builds, signed with a
+# throwaway key; nothing is kept or uploaded.
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-release-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  aab:
+    name: Build and upload AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GODOT_VERSION: 4.4.1-stable
+      TEMPLATES_DIR: /home/runner/.local/share/godot/export_templates/4.4.1.stable
+      PACKAGE_NAME: com.rsludo.game
+    steps:
+      - name: Check signing secrets
+        id: secrets
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          if [ "$IS_MAIN" != "true" ]; then
+            # Build check only: throwaway key, no artifact, no upload.
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+            echo "dry_run=true" >> "$GITHUB_OUTPUT"
+            echo "has_play=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "dry_run=false" >> "$GITHUB_OUTPUT"
+          if [ -n "$KEYSTORE_B64" ]; then echo "has_key=true" >> "$GITHUB_OUTPUT"; else
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Upload key secrets are not set yet, so no Play build was made. See docs/PLAY_STORE_SETUP.md."
+          fi
+          if [ -n "$PLAY_JSON" ]; then echo "has_play=true" >> "$GITHUB_OUTPUT"; else
+            echo "has_play=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out repository
+        if: steps.secrets.outputs.has_key == 'true'
+        uses: actions/checkout@v4
+
+      - name: Download Godot
+        if: steps.secrets.outputs.has_key == 'true'
+        run: |
+          curl -sSfL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          mv "/tmp/godot/Godot_v${GODOT_VERSION}_linux.x86_64" /tmp/godot/godot
+
+      - name: Restore Android build template
+        if: steps.secrets.outputs.has_key == 'true'
+        id: templates
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TEMPLATES_DIR }}
+          key: godot-android-source-${{ env.GODOT_VERSION }}
+
+      - name: Download Android build template
+        if: steps.secrets.outputs.has_key == 'true' && steps.templates.outputs.cache-hit != 'true'
+        run: |
+          curl -sSfL -o /tmp/templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          mkdir -p "$TEMPLATES_DIR"
+          unzip -j -o /tmp/templates.tpz templates/android_source.zip templates/version.txt -d "$TEMPLATES_DIR"
+          rm /tmp/templates.tpz
+
+      - name: Install the Gradle build template into the project
+        if: steps.secrets.outputs.has_key == 'true'
+        run: |
+          mkdir -p android/build
+          unzip -q -o "$TEMPLATES_DIR/android_source.zip" -d android/build
+          printf '%s' "$(cat "$TEMPLATES_DIR/version.txt")" > android/.build_version
+          touch android/build/.gdignore
+          cat android/.build_version
+
+      - name: Point Godot at the Android SDK and Java
+        if: steps.secrets.outputs.has_key == 'true'
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.4.tres <<SETTINGS
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "${ANDROID_SDK_ROOT}"
+          export/android/java_sdk_path = "${JAVA_HOME_17_X64}"
+          SETTINGS
+
+      - name: Set a new version code
+        if: steps.secrets.outputs.has_key == 'true'
+        run: |
+          CODE=$((1000 + GITHUB_RUN_NUMBER))
+          sed -i "/^\[preset.1.options\]/,\$ s/^version\/code=.*/version\/code=${CODE}/" export_presets.cfg
+          echo "VERSION_CODE=${CODE}" >> "$GITHUB_ENV"
+          grep -n "version/code" export_presets.cfg
+
+      - name: Write the upload key
+        if: steps.secrets.outputs.has_key == 'true' && steps.secrets.outputs.dry_run != 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.keystore"
+
+      - name: Make a throwaway key (build check only)
+        if: steps.secrets.outputs.dry_run == 'true'
+        run: |
+          keytool -genkeypair -keystore "$RUNNER_TEMP/upload.keystore" -storepass checkonly -keypass checkonly \
+            -alias check -keyalg RSA -keysize 2048 -validity 1 -dname "CN=Build check" > /dev/null
+          echo "CHECK_KEY_ALIAS=check" >> "$GITHUB_ENV"
+          echo "CHECK_KEY_PASSWORD=checkonly" >> "$GITHUB_ENV"
+
+      - name: Import project
+        if: steps.secrets.outputs.has_key == 'true'
+        run: timeout 300 /tmp/godot/godot --headless --path . --import
+
+      - name: Export release AAB
+        if: steps.secrets.outputs.has_key == 'true'
+        env:
+          GODOT_ANDROID_KEYSTORE_RELEASE_PATH: ${{ runner.temp }}/upload.keystore
+          GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "${CHECK_KEY_ALIAS:-}" ]; then
+            export GODOT_ANDROID_KEYSTORE_RELEASE_USER="$CHECK_KEY_ALIAS"
+            export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD="$CHECK_KEY_PASSWORD"
+          fi
+          mkdir -p build
+          timeout 1500 /tmp/godot/godot --headless --path . --export-release "Android Release" build/RSLudo-release.aab 2>&1 | tee export.log
+          test -s build/RSLudo-release.aab || { echo "AAB was not created"; exit 1; }
+          ls -la build/
+
+      - name: Remove the upload key from the runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.keystore"
+
+      - name: Keep the AAB (for the first manual upload)
+        if: steps.secrets.outputs.has_key == 'true' && steps.secrets.outputs.dry_run != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: RSLudo-release-aab-${{ env.VERSION_CODE }}
+          path: build/RSLudo-release.aab
+          retention-days: 30
+
+      - name: Upload to Google Play internal testing
+        if: steps.secrets.outputs.has_key == 'true' && steps.secrets.outputs.has_play == 'true'
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          releaseFiles: build/RSLudo-release.aab
+          releaseName: ${{ env.VERSION_CODE }}
+          track: internal
+          status: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}

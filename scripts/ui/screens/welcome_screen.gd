@@ -14,7 +14,7 @@ func build() -> void:
 		pawns.add_child(preview)
 	content.add_child(pawns)
 
-	content.add_child(UIKit.title("Welcome to Ludo Social", 52, Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
+	content.add_child(UIKit.title("Welcome to RS Ludo", 52, Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
 	content.add_child(UIKit.label("Play Ludo and Snake Ludo with family and friends on one device.", 30, Palette.TEXT_MUTED, HORIZONTAL_ALIGNMENT_CENTER, true))
 	content.add_child(UIKit.spacer(false))
 
