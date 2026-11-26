@@ -2,12 +2,32 @@ extends Node
 ## Plays sound effects: Sfx.play("dice"). Sounds are made by SoundSynth the first
 ## time they are needed. To use a recorded sound instead, put a file named
 ## <sound>.ogg or <sound>.wav in res://assets/sounds/ and it is used automatically.
-## The on/off setting is saved on the device.
+##
+## Volume: an overall level plus three groups (each its own audio bus), set by
+## the player with sliders and saved on the device.
 
 const SETTINGS_PATH := "user://settings.cfg"
-const VOICES := 8
+const VOICES := 10
 
+## Volume groups: id -> [bus name, label shown to players].
+const GROUPS := {
+	"moves": ["Moves", "Dice & moves"],
+	"battle": ["Battle", "Battles & snakes"],
+	"jingles": ["Jingles", "Jingles"],
+}
+## Which group each sound belongs to (anything not listed is a jingle).
+const SOUND_GROUPS := {
+	"click": "moves", "dice": "moves", "dice_land": "moves", "dice_move": "moves", "step": "moves",
+	"charge": "battle", "zap": "battle", "gunshot": "battle", "katana_draw": "battle", "katana_slash": "battle",
+	"swish": "battle", "bonk": "battle", "poof": "battle", "impact": "battle", "ko": "battle", "whoosh": "battle",
+	"thud": "battle", "hiss": "battle", "gulp": "battle", "slide": "battle", "pop": "battle",
+}
+const DEFAULT_VOLUME := 0.8
+
+## Sound on/off (the overall mute).
 var enabled: bool = true
+## "master" and each group id -> 0.0 .. 1.0
+var volumes: Dictionary = {}
 var _streams: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
@@ -15,13 +35,21 @@ var _next := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	for group in GROUPS:
+		_ensure_bus(GROUPS[group][0])
 	for i in VOICES:
 		var player := AudioStreamPlayer.new()
 		add_child(player)
 		_players.append(player)
+	volumes["master"] = DEFAULT_VOLUME
+	for group in GROUPS:
+		volumes[group] = DEFAULT_VOLUME
 	var cfg := ConfigFile.new()
 	if cfg.load(SETTINGS_PATH) == OK:
 		enabled = bool(cfg.get_value("audio", "sound", true))
+		for key in volumes.keys():
+			volumes[key] = clampf(float(cfg.get_value("audio", "volume_" + key, DEFAULT_VOLUME)), 0.0, 1.0)
+	_apply_volumes()
 
 
 ## Plays a sound. `pitch_spread` adds a little random pitch variation (0.1 = +/-10%).
@@ -34,9 +62,15 @@ func play(sound_name: String, volume_db: float = 0.0, pitch_spread: float = 0.0)
 	var player := _players[_next]
 	_next = (_next + 1) % _players.size()
 	player.stream = stream
+	player.bus = bus_for(sound_name)
 	player.volume_db = volume_db
 	player.pitch_scale = 1.0 + randf_range(-pitch_spread, pitch_spread)
 	player.play()
+
+
+func bus_for(sound_name: String) -> StringName:
+	var group: String = SOUND_GROUPS.get(sound_name, "jingles")
+	return StringName(GROUPS[group][0])
 
 
 func get_stream(sound_name: String) -> AudioStream:
@@ -54,9 +88,51 @@ func get_stream(sound_name: String) -> AudioStream:
 
 func set_enabled(value: bool) -> void:
 	enabled = value
+	_apply_volumes()
+	_save()
+
+
+## key: "master" or a group id. value: 0.0 (silent) .. 1.0 (loudest).
+func set_volume(key: String, value: float) -> void:
+	if not volumes.has(key):
+		return
+	volumes[key] = clampf(value, 0.0, 1.0)
+	_apply_volumes()
+	_save()
+
+
+func get_volume(key: String) -> float:
+	return float(volumes.get(key, DEFAULT_VOLUME))
+
+
+func _apply_volumes() -> void:
+	var master := AudioServer.get_bus_index("Master")
+	AudioServer.set_bus_mute(master, not enabled or get_volume("master") <= 0.0)
+	AudioServer.set_bus_volume_db(master, linear_to_db(maxf(get_volume("master"), 0.0001)))
+	for group in GROUPS:
+		var index := AudioServer.get_bus_index(GROUPS[group][0])
+		if index < 0:
+			continue
+		var level := get_volume(group)
+		AudioServer.set_bus_mute(index, level <= 0.0)
+		AudioServer.set_bus_volume_db(index, linear_to_db(maxf(level, 0.0001)))
+
+
+func _ensure_bus(bus_name: String) -> void:
+	if AudioServer.get_bus_index(bus_name) >= 0:
+		return
+	AudioServer.add_bus()
+	var index := AudioServer.bus_count - 1
+	AudioServer.set_bus_name(index, bus_name)
+	AudioServer.set_bus_send(index, "Master")
+
+
+func _save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(SETTINGS_PATH)
-	cfg.set_value("audio", "sound", value)
+	cfg.set_value("audio", "sound", enabled)
+	for key in volumes:
+		cfg.set_value("audio", "volume_" + key, volumes[key])
 	cfg.save(SETTINGS_PATH)
 
 

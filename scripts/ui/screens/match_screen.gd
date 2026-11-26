@@ -217,9 +217,9 @@ func _on_dice_pressed() -> void:
 
 
 func _animate_dice(value: int) -> void:
-	Sfx.play("dice", 0.0, 0.08)
+	Sfx.play("dice", -4.0, 0.06)
 	await _dice.roll_to(value)
-	Sfx.play("dice_land")
+	Sfx.play("dice_land", -4.0)
 	var pop := create_tween()
 	pop.tween_property(_dice, "scale", Vector2(1.12, 1.12), 0.08)
 	pop.tween_property(_dice, "scale", Vector2.ONE, 0.12)
@@ -315,22 +315,13 @@ func _build_pause_menu() -> void:
 	var resume := UIKit.button("Resume")
 	resume.pressed.connect(_toggle_pause)
 	box.add_child(resume)
-	var sound := UIKit.button(_sound_label(), UIKit.ButtonKind.SECONDARY)
-	sound.pressed.connect(func() -> void:
-		Sfx.set_enabled(not Sfx.enabled)
-		sound.text = _sound_label()
-	)
-	box.add_child(sound)
+	box.add_child(SoundSettingsPanel.new())
 	var restart := UIKit.button("Restart Match", UIKit.ButtonKind.SECONDARY)
 	restart.pressed.connect(SceneRouter.goto.bind(_mode.game_screen))
 	box.add_child(restart)
 	var quit := UIKit.button("Quit to Home", UIKit.ButtonKind.GHOST)
 	quit.pressed.connect(SceneRouter.goto.bind("home"))
 	box.add_child(quit)
-
-
-func _sound_label() -> String:
-	return "Sound: On" if Sfx.enabled else "Sound: Off"
 
 
 func is_paused() -> bool:

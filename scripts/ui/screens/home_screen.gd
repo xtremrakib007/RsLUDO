@@ -34,7 +34,10 @@ func build() -> void:
 		var b := UIKit.button(item, UIKit.ButtonKind.SECONDARY, 90)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.add_theme_font_size_override("font_size", 28)
-		b.pressed.connect(show_toast.bind("%s arrives in a later update." % item))
+		if item == "Settings":
+			b.pressed.connect(SceneRouter.goto.bind("settings"))
+		else:
+			b.pressed.connect(show_toast.bind("%s arrives in a later update." % item))
 		bottom.add_child(b)
 	content.add_child(bottom)
 

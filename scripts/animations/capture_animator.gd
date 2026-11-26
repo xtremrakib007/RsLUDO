@@ -58,6 +58,8 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 	var target := victim.position + Vector2(0, -big * 1.1)
 
 	# 2. Crouch, arm up, prop pops into the hand.
+	if style == Style.SWORD:
+		Sfx.play("katana_draw")
 	attacker.prop = prop_for(style)
 	attacker.prop_scale = 0.0
 	attacker.prop_angle = 0.0
@@ -78,7 +80,7 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 			tween.tween_property(attacker, "position", centre - gap * 1.25, 0.06)
 			tween.tween_property(attacker, "position", centre - gap, 0.18)
 			_effect(host, CaptureEffect.Kind.FLASH, attacker.hand_position(), attacker.hand_position(), Color.WHITE, cell * 0.6, "", 0.2)
-			Sfx.play("zap")
+			Sfx.play("gunshot", 0.0, 0.06)
 			await _effect(host, CaptureEffect.Kind.BEAM, attacker.hand_position(), target, beam_color, cell, "", 0.35)
 			_impact(host, target, beam_color, cell, "ZAP!", 1.0)
 		Style.SWORD:
@@ -92,7 +94,7 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 				tween.tween_property(attacker, "prop_angle", -from_angle, 0.1).from(from_angle)
 				var slash := CaptureEffect.create(CaptureEffect.Kind.SLASH, target, target, Color("bfe9ff"), cell * 0.9)
 				slash.angle = i * 1.1
-				Sfx.play("swish", 0.0, 0.15)
+				Sfx.play("katana_slash", 0.0, 0.1)
 				_run(host, slash, 0.3)
 				_shake(host, 0.012, 0.12)
 				await tween.finished
