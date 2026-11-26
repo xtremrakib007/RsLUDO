@@ -138,6 +138,7 @@ func animate_slide(seat: int, from: int, to: int) -> void:
 
 	# 5. Pops out of the tail, dizzy, then recovers.
 	Sfx.play("pop")
+	Sfx.play("boing", -6.0, 0.1)
 	node.position = square_center(to) + _pawn_offset()
 	node.arm_raise = 0.0
 	node.visible = true

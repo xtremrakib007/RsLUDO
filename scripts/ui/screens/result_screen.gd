@@ -43,7 +43,12 @@ func build() -> void:
 	content.add_child(UIKit.spacer())
 	_add_buttons(true)
 	_celebrate(preview)
-	Sfx.play("win")
+	Sfx.play("yay", -2.0)
+	var party := create_tween()
+	party.tween_interval(0.6)
+	party.tween_callback(Sfx.play.bind("party_horn", -2.0, 0.05))
+	party.tween_interval(0.5)
+	party.tween_callback(Sfx.play.bind("giggle", -3.0, 0.1))
 
 
 func _add_buttons(can_replay: bool) -> void:

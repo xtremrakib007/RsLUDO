@@ -197,7 +197,8 @@ static func _shake(host: Control, amount: float, duration: float) -> void:
 
 ## A happy double jump with confetti.
 static func celebrate(host: Node, pawn: PawnToken, cell: float) -> void:
-	Sfx.play("cheer", -2.0, 0.08)
+	Sfx.play("giggle", -2.0, 0.08)
+	Sfx.play("boing", -4.0, 0.1)
 	_effect(host, CaptureEffect.Kind.CONFETTI, pawn.position, pawn.position + Vector2(0, -cell * 0.8), Color.WHITE, cell, "", 1.0)
 	var tween := host.create_tween()
 	for i in 2:

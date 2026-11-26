@@ -8,7 +8,7 @@ func test_every_sound_builds() -> void:
 		var stream := SoundSynth.build(sound_name)
 		assert_not_null(stream, "%s builds" % sound_name)
 		var seconds := stream.data.size() / 2.0 / SoundSynth.RATE
-		assert_true(seconds > 0.02 and seconds < 2.0, "%s is %.2f s long" % [sound_name, seconds])
+		assert_true(seconds > 0.02 and seconds < 2.2, "%s is %.2f s long" % [sound_name, seconds])
 		var loudest := 0
 		for i in range(0, stream.data.size(), 2):
 			loudest = maxi(loudest, absi(stream.data.decode_s16(i)))
@@ -18,7 +18,8 @@ func test_every_sound_builds() -> void:
 
 func test_sounds_used_by_the_game_exist() -> void:
 	for sound_name in ["click", "dice", "dice_land", "dice_move", "step", "charge", "zap", "swish", "bonk", "poof",
-			"impact", "ko", "whoosh", "thud", "cheer", "climb", "hiss", "gulp", "slide", "pop", "extra", "no_move", "home", "win"]:
+			"impact", "ko", "whoosh", "thud", "cheer", "climb", "hiss", "gulp", "slide", "pop", "extra", "no_move", "home", "win",
+			"party_horn", "giggle", "yay", "boing"]:
 		assert_not_null(Sfx.get_stream(sound_name), "%s available" % sound_name)
 
 

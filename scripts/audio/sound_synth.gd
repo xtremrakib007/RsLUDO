@@ -9,7 +9,9 @@ const RATE := 22050
 
 enum Wave { SINE, SQUARE, SAW, TRIANGLE, NOISE }
 
-## Sound name -> recipe. Each layer: [wave, start_hz, end_hz, start_s, length_s, volume, attack_s, (noise cutoff 0..1)]
+## Sound name -> recipe. Each layer:
+## [wave, start_hz, end_hz, start_s, length_s, volume, attack_s, (noise cutoff 0..1), (vibrato depth), (vibrato hz), (tremolo hz)]
+## Vibrato wobbles the pitch (kazoo, party horn, spring); tremolo pulses the volume (giggles).
 const RECIPES := {
 	"click": [[Wave.SINE, 1100, 900, 0.0, 0.045, 0.35, 0.002]],
 	"step": [[Wave.SINE, 260, 170, 0.0, 0.07, 0.35, 0.003], [Wave.NOISE, 0, 0, 0.0, 0.04, 0.12, 0.001, 0.25]],
@@ -49,7 +51,7 @@ const RECIPES := {
 	"ko": [[Wave.SAW, 420, 300, 0.0, 0.22, 0.25, 0.01], [Wave.SAW, 320, 140, 0.25, 0.45, 0.25, 0.01], [Wave.SINE, 210, 70, 0.25, 0.45, 0.25, 0.01]],
 	"whoosh": [[Wave.NOISE, 0, 0, 0.0, 0.6, 0.35, 0.25, 0.5], [Wave.SINE, 300, 900, 0.0, 0.6, 0.06, 0.2]],
 	"thud": [[Wave.SINE, 120, 50, 0.0, 0.18, 0.55, 0.002], [Wave.NOISE, 0, 0, 0.0, 0.1, 0.25, 0.001, 0.2]],
-	"cheer": [[Wave.TRIANGLE, 784, 784, 0.0, 0.1, 0.25, 0.005], [Wave.TRIANGLE, 988, 988, 0.1, 0.1, 0.25, 0.005], [Wave.TRIANGLE, 1175, 1175, 0.2, 0.18, 0.25, 0.005], [Wave.NOISE, 0, 0, 0.0, 0.4, 0.08, 0.02, 0.9]],
+	"cheer": [[Wave.TRIANGLE, 784, 784, 0.0, 0.1, 0.25, 0.005, 1.0, 0.02, 8.0], [Wave.TRIANGLE, 988, 988, 0.1, 0.1, 0.25, 0.005, 1.0, 0.02, 8.0], [Wave.TRIANGLE, 1175, 1568, 0.2, 0.25, 0.25, 0.005, 1.0, 0.04, 9.0], [Wave.NOISE, 0, 0, 0.0, 0.45, 0.08, 0.02, 0.9]],
 	"climb": [[Wave.TRIANGLE, 523, 523, 0.0, 0.1, 0.3, 0.005], [Wave.TRIANGLE, 659, 659, 0.12, 0.1, 0.3, 0.005], [Wave.TRIANGLE, 784, 784, 0.24, 0.1, 0.3, 0.005], [Wave.TRIANGLE, 1047, 1047, 0.36, 0.2, 0.3, 0.005]],
 	"hiss": [[Wave.NOISE, 0, 0, 0.0, 0.4, 0.35, 0.08, 0.95]],
 	"gulp": [[Wave.SINE, 320, 90, 0.0, 0.22, 0.7, 0.005], [Wave.SINE, 160, 70, 0.12, 0.18, 0.4, 0.005]],
@@ -58,11 +60,28 @@ const RECIPES := {
 	"extra": [[Wave.TRIANGLE, 1319, 1319, 0.0, 0.1, 0.3, 0.003], [Wave.TRIANGLE, 1760, 1760, 0.09, 0.22, 0.3, 0.003]],
 	"no_move": [[Wave.SQUARE, 220, 180, 0.0, 0.14, 0.18, 0.005], [Wave.SQUARE, 180, 140, 0.16, 0.2, 0.18, 0.005]],
 	"home": [[Wave.TRIANGLE, 1047, 1047, 0.0, 0.12, 0.3, 0.003], [Wave.TRIANGLE, 1319, 1319, 0.1, 0.12, 0.3, 0.003], [Wave.TRIANGLE, 1568, 1568, 0.2, 0.3, 0.3, 0.003]],
+	# Winner: bouncy "ta-da-da-DAAA" on a kazoo with a drum, a spring boing and a party horn.
 	"win": [
-		[Wave.SQUARE, 523, 523, 0.00, 0.14, 0.16, 0.005], [Wave.SQUARE, 659, 659, 0.15, 0.14, 0.16, 0.005],
-		[Wave.SQUARE, 784, 784, 0.30, 0.14, 0.16, 0.005], [Wave.SQUARE, 1047, 1047, 0.45, 0.7, 0.16, 0.005],
-		[Wave.TRIANGLE, 523, 523, 0.45, 0.7, 0.22, 0.005], [Wave.TRIANGLE, 659, 659, 0.45, 0.7, 0.18, 0.005],
+		[Wave.NOISE, 0, 0, 0.00, 0.08, 0.35, 0.002, 0.3], [Wave.NOISE, 0, 0, 0.18, 0.08, 0.35, 0.002, 0.3],
+		[Wave.NOISE, 0, 0, 0.36, 0.08, 0.35, 0.002, 0.3], [Wave.NOISE, 0, 0, 0.54, 0.12, 0.45, 0.002, 0.25],
+		[Wave.SAW, 392, 392, 0.00, 0.15, 0.22, 0.01, 1.0, 0.02, 6.0], [Wave.SAW, 523, 523, 0.18, 0.15, 0.22, 0.01, 1.0, 0.02, 6.0],
+		[Wave.SAW, 659, 659, 0.36, 0.15, 0.22, 0.01, 1.0, 0.02, 6.0], [Wave.SAW, 784, 784, 0.54, 0.75, 0.26, 0.01, 1.0, 0.035, 6.5],
+		[Wave.SAW, 988, 988, 0.54, 0.75, 0.12, 0.01, 1.0, 0.035, 6.5], [Wave.TRIANGLE, 392, 392, 0.54, 0.75, 0.2, 0.01],
+		[Wave.SINE, 180, 900, 0.40, 0.35, 0.18, 0.005, 1.0, 0.12, 16.0],
+		[Wave.SAW, 520, 560, 1.05, 0.55, 0.2, 0.02, 1.0, 0.05, 9.0], [Wave.NOISE, 0, 0, 1.05, 0.5, 0.12, 0.05, 0.8],
 	],
+	# Party horn: buzzy "pfrrrt" with a wobble.
+	"party_horn": [[Wave.SAW, 480, 540, 0.0, 0.7, 0.35, 0.03, 1.0, 0.05, 11.0], [Wave.SQUARE, 240, 270, 0.0, 0.7, 0.12, 0.03, 1.0, 0.05, 11.0], [Wave.NOISE, 0, 0, 0.0, 0.7, 0.18, 0.05, 0.7, 0.0, 0.0, 22.0]],
+	# Cheeky giggle: "hee-hee-hee" falling in pitch.
+	"giggle": [[Wave.TRIANGLE, 820, 560, 0.0, 0.75, 0.42, 0.01, 1.0, 0.04, 7.0, 8.5], [Wave.SINE, 1640, 1120, 0.0, 0.75, 0.1, 0.01, 1.0, 0.04, 7.0, 8.5]],
+	# A crowd "yaaay!".
+	"yay": [
+		[Wave.SAW, 330, 420, 0.0, 0.9, 0.12, 0.08, 1.0, 0.03, 5.0], [Wave.SAW, 415, 520, 0.02, 0.88, 0.1, 0.08, 1.0, 0.03, 5.5],
+		[Wave.SAW, 495, 640, 0.04, 0.86, 0.09, 0.08, 1.0, 0.03, 6.0], [Wave.SAW, 262, 330, 0.03, 0.87, 0.09, 0.08, 1.0, 0.03, 4.5],
+		[Wave.NOISE, 0, 0, 0.0, 0.9, 0.12, 0.1, 0.85, 0.0, 0.0, 14.0],
+	],
+	# Cartoon spring.
+	"boing": [[Wave.SINE, 140, 520, 0.0, 0.45, 0.5, 0.004, 1.0, 0.18, 17.0]],
 }
 
 
@@ -94,6 +113,9 @@ static func _add_layer(mix: PackedFloat32Array, layer: Array, seed_value: int) -
 	var volume := float(layer[5])
 	var attack := maxf(float(layer[6]) * RATE, 1.0)
 	var cutoff := float(layer[7]) if layer.size() > 7 else 1.0
+	var vibrato_depth := float(layer[8]) if layer.size() > 8 else 0.0
+	var vibrato_hz := float(layer[9]) if layer.size() > 9 else 0.0
+	var tremolo_hz := float(layer[10]) if layer.size() > 10 else 0.0
 	var phase := 0.0
 	var low := 0.0
 	var rng := RandomNumberGenerator.new()
@@ -101,9 +123,14 @@ static func _add_layer(mix: PackedFloat32Array, layer: Array, seed_value: int) -
 	for i in samples:
 		var t := float(i) / maxf(samples - 1, 1)
 		# Pitch slides exponentially (sounds natural); envelope: quick attack, smooth decay.
+		var seconds := float(i) / RATE
 		var freq := f0 * pow(f1 / f0, t) if f0 > 0.0 and f1 > 0.0 else f0
+		if vibrato_depth > 0.0:
+			freq *= 1.0 + vibrato_depth * sin(TAU * vibrato_hz * seconds)
 		phase = fmod(phase + freq / RATE, 1.0)
 		var envelope := minf(1.0, i / attack) * pow(1.0 - t, 1.6)
+		if tremolo_hz > 0.0:
+			envelope *= 0.15 + 0.85 * maxf(0.0, sin(TAU * tremolo_hz * seconds))
 		var value := 0.0
 		match wave:
 			Wave.SINE:

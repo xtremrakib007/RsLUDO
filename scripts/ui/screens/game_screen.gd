@@ -124,6 +124,7 @@ func _play_events(events: Array[GameEvent]) -> void:
 				await _wait(0.4)
 			GameEvent.Type.PLAYER_FINISHED:
 				Sfx.play("win")
+				Sfx.play("yay", -3.0)
 				_show_banner("%s brought all pawns home!" % _name(d["seat"]), Palette.seat_color(d["seat"]))
 				for pawn in BoardLayout.PAWNS_PER_PLAYER:
 					CaptureAnimator.celebrate(board, board.pawn_node(d["seat"], pawn), board.cell_size())
