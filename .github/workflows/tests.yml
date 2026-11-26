@@ -64,6 +64,11 @@ jobs:
           mkdir -p screenshots
           SCREENSHOT_DIR="$PWD/screenshots" timeout 300 xvfb-run -a -s "-screen 0 1280x1024x24" \
             /tmp/godot/godot --path . --rendering-driver opengl3 --resolution 720x1600 res://tools/screenshots.tscn
+          # iPad (portrait and landscape) for the web version.
+          SCREENSHOT_DIR="$PWD/screenshots" SCREENSHOT_PREFIX=ipad_ timeout 300 xvfb-run -a -s "-screen 0 1400x1100x24" \
+            /tmp/godot/godot --path . --rendering-driver opengl3 --resolution 768x1024 res://tools/screenshots.tscn
+          SCREENSHOT_DIR="$PWD/screenshots" SCREENSHOT_PREFIX=ipad_landscape_ timeout 300 xvfb-run -a -s "-screen 0 1400x1100x24" \
+            /tmp/godot/godot --path . --rendering-driver opengl3 --resolution 1024x768 res://tools/screenshots.tscn
           ls -la screenshots
       - name: Upload screenshots
         uses: actions/upload-artifact@v4

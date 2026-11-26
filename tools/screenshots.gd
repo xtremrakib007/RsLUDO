@@ -62,7 +62,7 @@ func _shot(screen_id: String, out_dir: String, setup: Callable, file_name: Strin
 		for i in frames:
 			await get_tree().process_frame
 	var image := get_viewport().get_texture().get_image()
-	var path := out_dir.path_join((file_name if not file_name.is_empty() else screen_id) + ".png")
+	var path := out_dir.path_join(OS.get_environment("SCREENSHOT_PREFIX") + (file_name if not file_name.is_empty() else screen_id) + ".png")
 	image.save_png(path)
 	print("saved ", path)
 	screen.queue_free()
