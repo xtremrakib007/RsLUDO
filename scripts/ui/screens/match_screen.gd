@@ -4,12 +4,11 @@ extends BaseScreen
 ## message banner and the pause menu. Ludo and Snakes & Ladders extend this and
 ## add their own board and turn flow. Offline matches can be paused.
 
-const DICE_ROLL_TIME := 0.6
 
 var _config: MatchConfig
 var _mode: GameMode
 var _busy := false
-var _dice: DiceFace
+var _dice: Dice3DView
 var _dice_button: Button
 var _dice_pulse: Tween
 var _turn_label: Label
@@ -95,7 +94,6 @@ func _refresh_panels(current_seat: int, game_over: bool) -> void:
 	_turn_label.text = "%s's turn" % player.display_name
 	_turn_label.add_theme_color_override("font_color", player.color().lightened(0.25))
 	_dice.pip_color = player.color().darkened(0.15)
-	_dice.queue_redraw()
 	for seat in _panels:
 		var panel: PanelContainer = _panels[seat]
 		var color := Palette.seat_color(seat)
@@ -137,7 +135,7 @@ func _dice_panel() -> Control:
 	_dice_button.custom_minimum_size = Vector2(124, 124)
 	_dice_button.focus_mode = Control.FOCUS_NONE
 	UIKit.style_button(_dice_button, Color(0, 0, 0, 0), Palette.TEXT, 0, 24)
-	_dice = DiceFace.new()
+	_dice = Dice3DView.new()
 	_dice.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_dice_button.add_child(_dice)
 	UIKit.ignore_mouse_recursive(_dice_button)
@@ -154,21 +152,11 @@ func _on_dice_pressed() -> void:
 
 
 func _animate_dice(value: int) -> void:
-	var tween := create_tween()
-	tween.tween_method(_spin_dice, 0.0, 1.0, DICE_ROLL_TIME).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	await tween.finished
-	_dice.rotation = 0.0
-	_dice.value = value
+	await _dice.roll_to(value)
 	var pop := create_tween()
-	pop.tween_property(_dice, "scale", Vector2(1.15, 1.15), 0.08)
+	pop.tween_property(_dice, "scale", Vector2(1.12, 1.12), 0.08)
 	pop.tween_property(_dice, "scale", Vector2.ONE, 0.12)
 	await pop.finished
-
-
-func _spin_dice(t: float) -> void:
-	_dice.rotation = t * TAU * 2.0
-	if int(t * 30.0) % 2 == 0:
-		_dice.value = randi_range(1, 6)
 
 
 func _start_dice_pulse() -> void:

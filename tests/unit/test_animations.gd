@@ -125,3 +125,19 @@ func test_snake_swallows_the_pawn_and_it_pops_out_at_the_tail() -> void:
 	assert_eq(view.snake_mouth, 0.0, "mouth closed")
 	view.queue_free()
 	await tree.process_frame
+
+
+func test_3d_dice_lands_on_the_rolled_value() -> void:
+	var dice := Dice3DView.new()
+	dice.size = Vector2(128, 128)
+	tree.root.add_child(dice)
+	await tree.process_frame
+	for face in range(1, 7):
+		dice.value = face
+		assert_eq(dice.top_face(), face, "showing %d puts %d on top" % [face, face])
+	for face in [3, 6, 1]:
+		await dice.roll_to(face)
+		assert_eq(dice.top_face(), face, "rolled %d lands on %d" % [face, face])
+		assert_eq(dice.value, face)
+	dice.queue_free()
+	await tree.process_frame
