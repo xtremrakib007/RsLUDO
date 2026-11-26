@@ -71,8 +71,10 @@ func animate_walk(seat: int, from: int, to: int) -> void:
 	move_child(node, get_child_count() - 1)
 	node.radius = _pawn_radius(1)
 	for square in range(maxi(from + 1, 1), to + 1):
+		var target := square_center(square) + _pawn_offset()
+		node.next_step(target.x - node.position.x)
 		var tween := create_tween()
-		tween.tween_property(node, "position", square_center(square) + _pawn_offset(), HOP_TIME).set_trans(Tween.TRANS_SINE)
+		tween.tween_property(node, "position", target, HOP_TIME).set_trans(Tween.TRANS_SINE)
 		tween.parallel().tween_method(node.set_hop, 0.0, 1.0, HOP_TIME)
 		await tween.finished
 	node.set_hop(0.0)
@@ -83,9 +85,12 @@ func animate_climb(seat: int, to: int) -> void:
 	var node := pawn_node(seat)
 	if node == null:
 		return
+	# Hand over hand up the ladder.
 	var tween := create_tween()
-	tween.tween_property(node, "position", square_center(to) + _pawn_offset(), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(node, "position", square_center(to) + _pawn_offset(), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_method(node.set_climb, 0.01, 1.0, 0.8)
 	await tween.finished
+	node.set_climb(0.0)
 
 
 ## Slides down a snake, following its body from head to tail.
@@ -96,10 +101,15 @@ func animate_slide(seat: int, from: int, to: int) -> void:
 	_slide_path = SnakeArt.body_path(_snake_anchors(from, to), cell_size())
 	_slide_path.reverse()
 	_slide_node = node
+	# Arms up, "wheee", down the snake's back.
+	node.arm_raise = 1.0
+	node.dizzy = true
 	var tween := create_tween()
 	tween.tween_method(_slide_step, 0.0, 1.0, 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await tween.finished
 	node.rotation = 0.0
+	node.arm_raise = 0.0
+	node.dizzy = false
 
 
 var _slide_path := PackedVector2Array()

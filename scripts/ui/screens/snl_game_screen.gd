@@ -81,7 +81,8 @@ func _play_events(events: Array[GameEvent]) -> void:
 				await board.animate_slide(d["seat"], d["from"], d["to"])
 			GameEvent.Type.PLAYER_FINISHED:
 				_show_banner("%s reached 100!" % _name(d["seat"]), Palette.seat_color(d["seat"]))
-				await _wait(0.8)
+				await CaptureAnimator.celebrate(board, board.pawn_node(d["seat"]), board.cell_size())
+				await _wait(0.4)
 			GameEvent.Type.EXTRA_TURN:
 				_show_banner("Roll again!", Palette.ACCENT)
 				await _wait(0.35)

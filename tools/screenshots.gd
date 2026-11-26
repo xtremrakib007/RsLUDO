@@ -28,19 +28,22 @@ func _ready() -> void:
 	await _shot("game", out_dir, _setup_midgame, "game_classic_4p")
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 2)
 	await _shot("game", out_dir, _setup_choice, "game_classic_2p_choice")
+	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
+	await _shot("game", out_dir, _setup_capture, "capture_mid_attack", 75)
+	AppState.match_config = MatchConfig.create(ClassicMode.ID, 2)
 	AppState.last_ranking = [2, 0] as Array[int]
 	await _shot("result", out_dir, func() -> void: pass)
 	get_tree().quit()
 
 
-func _shot(screen_id: String, out_dir: String, setup: Callable, file_name: String = "") -> void:
+func _shot(screen_id: String, out_dir: String, setup: Callable, file_name: String = "", frames: int = 40) -> void:
 	var packed: PackedScene = load(SceneRouterScript.SCREENS[screen_id])
 	var screen := packed.instantiate()
 	get_tree().root.add_child(screen)
 	await get_tree().process_frame
 	_current = screen
 	setup.call()
-	for i in 40:
+	for i in frames:
 		await get_tree().process_frame
 	var image := get_viewport().get_texture().get_image()
 	var path := out_dir.path_join((file_name if not file_name.is_empty() else screen_id) + ".png")
@@ -77,6 +80,16 @@ func _setup_snl() -> void:
 	board.sync(m.state)
 	board.queue_redraw()
 	_current.call("_refresh_ui")
+
+
+## Starts a capture (blaster) so the picture shows the attack in progress.
+func _setup_capture() -> void:
+	var board: BoardView = _current.get("board")
+	var m: LocalMatch = _current.get("local_match")
+	m.state.set_pawn_progress(0, 0, 14)
+	m.state.set_pawn_progress(1, 0, 1)
+	board.sync(m.state)
+	CaptureAnimator.play(board, board.pawn_node(0, 0), board.pawn_node(1, 0), CaptureAnimator.Style.BLASTER, board.cell_size())
 
 
 ## Two pawns that can move: shows the glowing choice.
