@@ -26,7 +26,9 @@ static func draw_snake(canvas: CanvasItem, anchors: Array[Vector2], cell: float,
 	if bulge >= 0.0:
 		# A hint of the swallowed character's colour inside the bulge.
 		var i := clampi(roundi(bulge_index), 0, count - 1)
-		canvas.draw_circle(path[i], _radius(i, count, cell) * 1.1, Color(bulge_color, 0.45))
+		var swollen := _radius(i, count, cell) * _swell(i, bulge_index)
+		canvas.draw_circle(path[i], swollen * 0.75, Color(bulge_color, 0.8))
+		canvas.draw_circle(path[i] + Vector2(-swollen * 0.2, -swollen * 0.25), swollen * 0.2, Color(1, 1, 1, 0.5))
 	# Scales and a lighter belly stripe.
 	for k in range(2, count - 3, 2):
 		var r := _radius(k, count, cell) * _swell(k, bulge_index)
@@ -38,7 +40,7 @@ static func draw_snake(canvas: CanvasItem, anchors: Array[Vector2], cell: float,
 	var direction := head_direction(path)
 	var head := path[count - 1] + direction * cell * 0.08
 	var open := clampf(mouth_open, 0.0, 1.0)
-	canvas.draw_set_transform(head, direction.angle(), Vector2(1.25, 1.0) * (1.0 + 0.35 * open))
+	canvas.draw_set_transform(head, direction.angle(), Vector2(1.25, 1.0) * (1.0 + 0.6 * open))
 	var head_r := cell * 0.27
 	canvas.draw_circle(Vector2.ZERO, head_r + cell * 0.04, outline)
 	canvas.draw_circle(Vector2.ZERO, head_r, color)
@@ -82,8 +84,8 @@ static func mouth_point(anchors: Array[Vector2], cell: float) -> Vector2:
 
 
 static func _swell(k: int, bulge_index: float) -> float:
-	var d := (k - bulge_index) / 2.5
-	return 1.0 + 0.9 * exp(-d * d)
+	var d := (k - bulge_index) / 3.0
+	return 1.0 + 1.8 * exp(-d * d)
 
 
 ## The snake's body line (tail to head), used to slide pawns down a snake.
