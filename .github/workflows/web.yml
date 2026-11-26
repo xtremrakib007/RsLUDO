@@ -19,6 +19,8 @@ jobs:
   build:
     name: Build web version
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 20
     env:
       GODOT_VERSION: 4.4.1-stable
@@ -58,6 +60,27 @@ jobs:
           test -s build/web/index.html || { echo "Web export failed"; exit 1; }
           ls -la build/web
           du -sh build/web
+
+      - name: Start the game in a browser (iPad size)
+        run: |
+          mkdir -p /tmp/webcheck && cd /tmp/webcheck && npm init -y > /dev/null && npm i -s playwright@1.49.1 > /dev/null
+          npx playwright install --with-deps chromium > /dev/null
+          (cd "$GITHUB_WORKSPACE/build/web" && python3 -m http.server 8000 > /dev/null 2>&1 &)
+          mkdir -p "$GITHUB_WORKSPACE/web-shots"
+          cp "$GITHUB_WORKSPACE/tools/web_check.mjs" /tmp/webcheck/
+          node /tmp/webcheck/web_check.mjs http://localhost:8000/ "$GITHUB_WORKSPACE/web-shots"
+
+      - name: Publish browser screenshots to the ci-web-screenshots branch
+        if: github.event_name == 'push'
+        run: |
+          cd web-shots
+          git init -q -b ci-web-screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          printf '# Web build in a browser\n\nFrom %s at %s.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" > README.md
+          git add -A
+          git commit -q -m "Web screenshots for ${GITHUB_REF_NAME} ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" ci-web-screenshots
 
       - name: Keep the web build
         uses: actions/upload-artifact@v4
