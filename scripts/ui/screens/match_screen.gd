@@ -11,6 +11,10 @@ var _busy := false
 var _dice: Dice3DView
 var _dice_button: Button
 var _dice_pulse: Tween
+## seat -> the spot next to that player's name card where the dice sits.
+var _dice_slots: Dictionary = {}
+var _dice_seat: int = -1
+var _dice_moving := false
 var _turn_label: Label
 var _hint_label: Label
 var _panels: Dictionary = {}
@@ -44,6 +48,8 @@ func _setup_match(default_mode_id: String) -> void:
 
 ## Adds the overlay layers. Call last in build().
 func _finish_setup() -> void:
+	# The dice floats above the layout so it can fly between players.
+	add_child(_dice_button)
 	_build_banner()
 	_build_pause_menu()
 
@@ -56,10 +62,25 @@ func _subtitle() -> String:
 
 func _corner_row(left_seat: int, right_seat: int) -> Control:
 	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
 	row.add_child(_player_panel(left_seat))
+	row.add_child(_dice_slot(left_seat))
 	row.add_child(UIKit.spacer(false))
+	row.add_child(_dice_slot(right_seat))
 	row.add_child(_player_panel(right_seat))
 	return row
+
+
+## Empty space beside a player's card where the dice goes on their turn.
+func _dice_slot(seat: int) -> Control:
+	var slot := Control.new()
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _config.player_at_seat(seat) == null:
+		return slot
+	slot.custom_minimum_size = Vector2(96, 96)
+	slot.item_rect_changed.connect(_snap_dice)
+	_dice_slots[seat] = slot
+	return slot
 
 
 func _player_panel(seat: int) -> Control:
@@ -71,11 +92,11 @@ func _player_panel(seat: int) -> Control:
 	var panel := PanelContainer.new()
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
-	row.add_child(UIKit.color_dot(player.color(), 40))
+	row.add_child(UIKit.color_dot(player.color(), 32))
 	var texts := VBoxContainer.new()
 	texts.add_theme_constant_override("separation", 0)
-	var name_label := UIKit.title(player.display_name, 26)
-	name_label.custom_minimum_size = Vector2(180, 0)
+	var name_label := UIKit.title(player.display_name, 24)
+	name_label.custom_minimum_size = Vector2(128, 0)
 	name_label.clip_text = true
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	texts.add_child(name_label)
@@ -93,7 +114,10 @@ func _refresh_panels(current_seat: int, game_over: bool) -> void:
 	var player := _config.player_at_seat(current_seat)
 	_turn_label.text = "%s's turn" % player.display_name
 	_turn_label.add_theme_color_override("font_color", player.color().lightened(0.25))
-	_dice.pip_color = player.color().darkened(0.15)
+	_dice.body_color = player.color()
+	_dice.pip_color = Color.WHITE
+	if current_seat != _dice_seat:
+		_move_dice_to(current_seat)
 	for seat in _panels:
 		var panel: PanelContainer = _panels[seat]
 		var color := Palette.seat_color(seat)
@@ -116,6 +140,7 @@ func _name(seat: int) -> String:
 
 # --- Dice ---------------------------------------------------------------
 
+## The turn/hint card. The dice itself floats beside the current player's card.
 func _dice_panel() -> Control:
 	var panel := UIKit.card(Palette.PANEL, 28, 16)
 	var row := HBoxContainer.new()
@@ -132,7 +157,7 @@ func _dice_panel() -> Control:
 	row.add_child(texts)
 
 	_dice_button = Button.new()
-	_dice_button.custom_minimum_size = Vector2(124, 124)
+	_dice_button.size = Vector2(96, 96)
 	_dice_button.focus_mode = Control.FOCUS_NONE
 	UIKit.style_button(_dice_button, Color(0, 0, 0, 0), Palette.TEXT, 0, 24)
 	_dice = Dice3DView.new()
@@ -141,9 +166,42 @@ func _dice_panel() -> Control:
 	UIKit.ignore_mouse_recursive(_dice_button)
 	UIKit.add_press_feedback(_dice_button)
 	_dice_button.pressed.connect(_on_dice_pressed)
-	row.add_child(_dice_button)
 	panel.add_child(row)
 	return panel
+
+
+## Flies the dice to the spot beside this player's card, tumbling on the way.
+func _move_dice_to(seat: int) -> void:
+	var slot: Control = _dice_slots.get(seat)
+	if slot == null:
+		return
+	var first := _dice_seat == -1
+	_dice_seat = seat
+	if first or not is_inside_tree():
+		_snap_dice()
+		return
+	_dice_moving = true
+	var target := slot.global_position - global_position
+	var tween := create_tween().set_parallel()
+	tween.tween_property(_dice_button, "position", target, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(_dice_button, "size", slot.size, 0.4)
+	tween.tween_property(_dice_button, "rotation", TAU, 0.4).from(0.0).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	await tween.finished
+	_dice_button.rotation = 0.0
+	_dice_moving = false
+	_snap_dice()
+
+
+## Keeps the dice exactly on its slot (after layout changes).
+func _snap_dice() -> void:
+	if _dice_moving or _dice_button == null:
+		return
+	var slot: Control = _dice_slots.get(_dice_seat)
+	if slot == null:
+		return
+	_dice_button.position = slot.global_position - global_position
+	_dice_button.size = slot.size
+	_dice_button.pivot_offset = slot.size * 0.5
 
 
 ## Override: what happens when the dice is tapped.

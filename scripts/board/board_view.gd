@@ -35,6 +35,11 @@ func pawn_count() -> int:
 	return _pawns.size()
 
 
+## Where a pawn stands in its base, in this control's coordinates.
+func base_position(seat: int, pawn: int) -> Vector2:
+	return grid_to_local(BoardLayout.base_slot_points(seat)[pawn]) + _pawn_offset()
+
+
 func pawn_node(seat: int, pawn: int) -> PawnToken:
 	return _pawns.get(Vector2i(seat, pawn))
 

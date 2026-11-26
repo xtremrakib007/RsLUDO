@@ -38,6 +38,12 @@ var value: int = 6:
 		value = clampi(v, 1, 6)
 		if _cube != null:
 			_cube.basis = Basis.from_euler(FACE_ROTATIONS[value])
+## The cube's colour (the current player's colour).
+var body_color: Color = Color("f2f0e8"):
+	set(c):
+		body_color = c
+		if _body_material != null:
+			_body_material.albedo_color = c
 var pip_color: Color = Palette.TEXT_DARK:
 	set(c):
 		pip_color = c
@@ -49,6 +55,7 @@ var _holder: Node3D
 var _cube: Node3D
 var _shadow: MeshInstance3D
 var _pip_material: StandardMaterial3D
+var _body_material: StandardMaterial3D
 var _final_rotation: Quaternion
 var _spin_axis: Vector3 = Vector3.UP
 var _spins: float = 3.0
@@ -158,8 +165,9 @@ func _build_scene() -> void:
 	_holder.add_child(_cube)
 
 	var body := StandardMaterial3D.new()
-	body.albedo_color = Color("f2f0e8")
+	body.albedo_color = body_color
 	body.roughness = 0.4
+	_body_material = body
 	_pip_material = StandardMaterial3D.new()
 	_pip_material.albedo_color = pip_color
 	_pip_material.roughness = 0.5

@@ -148,8 +148,7 @@ func _play_capture(seat: int, pawn: int, victim_seat: int, victim_pawn: int) -> 
 	last_capture_style = CaptureAnimator.pick_style(_rng, last_capture_style)
 	captures_played += 1
 	_show_banner("%s captured %s!" % [_name(seat), _name(victim_seat)], Palette.seat_color(seat))
-	await CaptureAnimator.play(board, attacker, victim, last_capture_style, board.cell_size())
-	await board.animate_to_base(victim_seat, victim_pawn)
+	await CaptureAnimator.play(board, attacker, victim, last_capture_style, board.cell_size(), board.base_position(victim_seat, victim_pawn))
 	await CaptureAnimator.celebrate(board, attacker, board.cell_size())
 
 
