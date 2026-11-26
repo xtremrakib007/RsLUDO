@@ -140,7 +140,7 @@ func _build_scene() -> void:
 	world.add_child(light)
 
 	var camera := Camera3D.new()
-	camera.fov = 28.0
+	camera.fov = 22.0
 	var eye := Vector3(0, 3.6, 3.0)
 	camera.transform = Transform3D(Basis.looking_at(Vector3(0, 0.35, 0) - eye, Vector3.UP), eye)
 	world.add_child(camera)

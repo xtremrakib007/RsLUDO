@@ -192,6 +192,10 @@ func _move_dice_to(seat: int) -> void:
 	_snap_dice()
 
 
+func _process(_delta: float) -> void:
+	_snap_dice()
+
+
 ## Keeps the dice exactly on its slot (after layout changes).
 func _snap_dice() -> void:
 	if _dice_moving or _dice_button == null:
@@ -199,9 +203,11 @@ func _snap_dice() -> void:
 	var slot: Control = _dice_slots.get(_dice_seat)
 	if slot == null:
 		return
-	_dice_button.position = slot.global_position - global_position
-	_dice_button.size = slot.size
-	_dice_button.pivot_offset = slot.size * 0.5
+	var target := slot.global_position - global_position
+	if _dice_button.position != target or _dice_button.size != slot.size:
+		_dice_button.position = target
+		_dice_button.size = slot.size
+		_dice_button.pivot_offset = slot.size * 0.5
 
 
 ## Override: what happens when the dice is tapped.

@@ -36,7 +36,7 @@ func _ready() -> void:
 	await _shot("game", out_dir, _setup_capture, "capture_hammer", 0, 1.3)
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
 	_capture_style = CaptureAnimator.Style.SWORD
-	await _shot("game", out_dir, _setup_capture, "capture_knockout", 0, 2.6)
+	await _shot("game", out_dir, _setup_capture, "capture_knockout", 0, 2.05)
 	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, 2)
 	AppState.match_config.board_id = "classic"
 	await _shot("snl_game", out_dir, _setup_snake_bite, "snake_mouth_open", 0, 0.45)

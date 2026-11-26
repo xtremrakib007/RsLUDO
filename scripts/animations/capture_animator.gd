@@ -12,7 +12,7 @@ extends RefCounted
 enum Style { BLASTER, SWORD, HAMMER, WAND }
 
 const STYLE_NAMES := ["Blaster", "Sword", "Hammer", "Magic wand"]
-const ZOOM := 1.7
+const ZOOM := 1.55
 
 
 ## A random style, never the same one twice in a row.
@@ -41,6 +41,8 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 	var big := cell * 0.75
 	attacker.z_index = 5
 	victim.z_index = 5
+	# Draw the zoomed board above the rest of the screen.
+	host.z_index = 10
 
 	# 1. Zoom in on the fight; step apart, grow, face off.
 	host.pivot_offset = centre
@@ -153,6 +155,8 @@ static func knockback(host: Control, pawn: PawnToken, home: Vector2, cell: float
 	pawn.rotation = 0.0
 	pawn.position = home
 	host.rotation = 0.0
+	if zoom_out:
+		host.z_index = 0
 	_effect(host, CaptureEffect.Kind.DUST, home + Vector2(0, cell * 0.4), home + Vector2(0, cell * 0.4), Color.WHITE, cell, "", 0.4)
 	var land := host.create_tween()
 	land.tween_property(pawn, "squash", Vector2(1.3, 0.7), 0.06)
