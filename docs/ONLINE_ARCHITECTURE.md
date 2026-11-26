@@ -45,14 +45,50 @@ One account can have several linked logins.
 - `LudoPlayer.ControlType.REMOTE` marks players whose moves come from the server.
 - The Phase 2 engine will be pure functions over plain `MatchState` data producing events, so the same rules can run server-side and the client can replay events.
 
-## Candidate low-cost stack (to decide in Phase 6)
+## Chosen design (2026-11-26)
 
-| Need | Free/open-source options |
-| --- | --- |
-| Match server | Nakama (open source, self-hosted) with authoritative match handlers, or a headless Godot server |
-| Accounts, friends, chat, leaderboards | Nakama built-ins |
-| Voice (optional) | WebRTC (Godot has WebRTC support); a TURN server such as coturn |
-| Hosting | One small VPS to start |
+| Need | Choice | Cost |
+| --- | --- | --- |
+| Game server | **Headless Godot** running the **same rules code** as the app (`LudoRules`, `SnlEngine`), so client and server can never disagree | Free |
+| Hosting | **Oracle Cloud Always Free** Ampere VM (Ubuntu), Singapore | Free |
+| Secure connection | **Caddy** reverse proxy with automatic Let's Encrypt certificate on a **DuckDNS** name; clients connect with `wss://` | Free |
+| Accounts | **Firebase Authentication** (anonymous guests first; Google and Facebook later), used from the app through Firebase's REST API | Free (Spark plan) |
+| Profiles, friends, match history | **Firestore**, written only by the server with a service account | Free tier |
+| Deploys | GitHub Actions workflow over SSH (key in GitHub secrets) | Free |
+
+Setup steps for the owner: `ONLINE_SETUP.md`.
+
+### How a match works
+
+1. The app signs in (anonymous guest for now) and gets a Firebase ID token.
+2. It opens `wss://<server>/play` and sends `hello {token}`. The server checks the
+   token's signature against Google's public keys, its audience (project ID) and expiry.
+3. `create_room {mode, players, board}` returns a 6-letter **room code**; friends send
+   `join_room {code}`. `quick_match {mode, players}` puts the player in a queue.
+4. When the room is full the server starts the match. **Only the server rolls the
+   dice and applies moves**, using the same rule engines as offline. Clients send
+   intents (`roll`, `move {pawn}`) and receive the resulting `GameEvent`s, which they
+   animate exactly like offline play.
+5. **No pause online.** A turn timer (about 20 s) makes an automatic move or skips;
+   a disconnected player has a grace period (about 60 s) to reconnect with the
+   same room and token before being replaced by automatic moves.
+6. At the end the server writes the match to Firestore (`matches/{id}`) and updates
+   each player's history and statistics (`users/{uid}`).
+
+### Security rules
+
+- Server-authoritative: the client cannot choose dice values, move out of turn or report results.
+- Firestore rules deny all client access; only the server (service account) reads and writes.
+- The service-account key lives only in GitHub secrets and on the server (`/etc/rs-ludo`, readable only by the service).
+- Messages are size-limited and rate-limited; room codes avoid look-alike letters.
+
+### Build order
+
+1. Server skeleton, deploy workflow, health check.
+2. Guest sign-in, Create Room / Join Room with a code, Classic Ludo online.
+3. Snakes & Ladders online, reconnect, turn timer.
+4. Quick Match.
+5. Online profile and history; Friends (friend codes), then Google and Facebook login.
 
 ## Feature list
 
