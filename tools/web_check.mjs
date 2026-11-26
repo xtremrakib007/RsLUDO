@@ -12,8 +12,8 @@ page.on('pageerror', (err) => { problems.push(String(err)); console.log(`[pageer
 await page.goto(url);
 await page.waitForTimeout(25000);
 await page.screenshot({ path: `${outDir}/web_ipad_start.png` });
-// Tap "Play as Guest" (lower middle of the welcome screen), then wait for home.
-await page.touchscreen.tap(384, 790);
+// Tap "Play as Guest" (the yellow button on the welcome screen), then wait for home.
+await page.touchscreen.tap(384, 602);
 await page.waitForTimeout(6000);
 await page.screenshot({ path: `${outDir}/web_ipad_after_tap.png` });
 await browser.close();
