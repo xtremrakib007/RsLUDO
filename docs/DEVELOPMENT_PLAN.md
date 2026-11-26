@@ -22,9 +22,9 @@ Each phase ends with a review. The next phase starts only after approval.
 - [x] Turn flow for 2 and 4 local players: tap the dice, tap a glowing pawn; the only possible move is made automatically; no-move turns pass
 - [x] Pawns hop square by square; captured pawns fly back to base
 - [x] Restart match (pause menu) and a match result screen with Play Again
-- [x] Brought forward from Phase 4: snakes drawn on the Snake Ludo board, and the bite rule (exact landing on a mouth only, configurable penalty) with a simple effect
+- [x] Snakes & Ladders replaces Snake Ludo (owner decision): 1-100 board, one pawn per player, five original boards on a Choose Board screen, ladders up, snakes down (landing square only), exact roll for 100, six rolls again
 - [x] Tighter game layout; Android debug APK built on every push; CI screenshots on the `ci-screenshots` branch
-- [x] Tests: dice, legal movement, starting, safe squares, captures, home path, winning, three sixes, restart, snake mouth landing, passing over a snake, no capture event without a capture
+- [x] Tests: dice, legal movement, starting, safe squares, captures, home path, winning, three sixes, restart, no capture event without a capture; Snakes & Ladders squares, boards, ladders, snake heads, passing a snake, exact 100, ranking
 
 ## Phase 3: Character animation
 
@@ -33,11 +33,10 @@ Each phase ends with a review. The next phase starts only after approval.
 - Victory celebration
 - Tests: laser sequence only after a successful capture
 
-## Phase 4: Snake Ludo
+## Phase 4: Snakes & Ladders polish
 
-- Snake data, the bite rule and its tests already exist (Phase 2)
-- Animated snakes (idle motion) and a family-friendly bite animation
-- Snake board variations (different snake positions) if wanted
+- Animated snakes (idle motion) and a family-friendly slide animation for the characters
+- More boards if wanted
 
 ## Phase 5: Polish and Android
 

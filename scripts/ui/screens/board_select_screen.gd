@@ -21,7 +21,7 @@ func build() -> void:
 	var names := VBoxContainer.new()
 	names.add_theme_constant_override("separation", 4)
 	_title = UIKit.title("", 44, Palette.ACCENT, HORIZONTAL_ALIGNMENT_CENTER)
-	_tagline = UIKit.label("", 26, Palette.TEXT_MUTED, HORIZONTAL_ALIGNMENT_CENTER)
+	_tagline = UIKit.label("", 26, Palette.TEXT_MUTED, HORIZONTAL_ALIGNMENT_CENTER, true)
 	names.add_child(_title)
 	names.add_child(_tagline)
 	content.add_child(names)
@@ -77,7 +77,7 @@ func _step(delta: int) -> void:
 func _show_board() -> void:
 	var board := current_board()
 	_title.text = board.title
-	_tagline.text = "%s  -  %d ladders, %d snakes" % [board.tagline, board.ladders.size(), board.snakes.size()]
+	_tagline.text = "%s\n%d ladders, %d snakes" % [board.tagline, board.ladders.size(), board.snakes.size()]
 	_counter.text = "Board %d of %d" % [_index + 1, _boards.size()]
 	board_preview.setup(board, [] as Array[int])
 	board_preview.modulate.a = 0.0

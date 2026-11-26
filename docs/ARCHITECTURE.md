@@ -4,7 +4,7 @@
 
 1. **Rules and visuals are separate.** Game logic (`scripts/core`, and the Phase 2 rules engine) never touches nodes, tweens or drawing. Visual code (`scripts/board`, `scripts/animations`, `scripts/ui`) only shows what the logic decided. This lets us test the rules headless, replace art freely and, later, run the same rules on a server.
 2. **Rules are data.** `LudoRulesConfig` holds every house rule (start rolls, extra turns, three-sixes, safe squares, blocks, snake penalty). Variations are new data, not new code.
-3. **One engine, two modes.** `GameMode` subclasses (`ClassicMode`, `SnakeMode`) only supply text, colours and default rules. Snake Ludo adds a snake layer on top of the same engine in Phase 4.
+3. **Two games, shared parts.** `ClassicMode` uses the Ludo engine (`LudoRules`); `SnakesLaddersMode` uses its own engine (`scripts/core/snakes_ladders/`). Both produce `GameEvent`s and share dice, players, `MatchScreen` (dice panel, banners, pause) and the result screen. Boards for Snakes & Ladders are data in `SnlBoards`.
 4. **Small files with one job.** No single large game script.
 
 ## Layers

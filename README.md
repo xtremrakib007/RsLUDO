@@ -3,10 +3,10 @@
 A family-friendly Ludo game for Android, built with **Godot 4** and **GDScript**. All tools and libraries are free and open source.
 
 - **Classic Ludo**: 2 or 4 players, traditional rules (configurable).
-- **Snake Ludo**: the same engine plus cartoon snakes that bite only when a pawn stops exactly on a snake's mouth.
+- **Snakes & Ladders**: the traditional 1-100 race, one character per player, with five boards to choose from.
 - Offline pass-and-play first. Online play is planned (see `docs/ONLINE_ARCHITECTURE.md`) but not built.
 
-Current status: **Phase 2 (playable Classic and Snake Ludo, pass and play)**. See `docs/DEVELOPMENT_PLAN.md`.
+Current status: **Phase 2 (playable Classic Ludo and Snakes & Ladders, pass and play)**. See `docs/DEVELOPMENT_PLAN.md`.
 
 ## Open the project
 
