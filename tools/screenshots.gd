@@ -29,22 +29,31 @@ func _ready() -> void:
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 2)
 	await _shot("game", out_dir, _setup_choice, "game_classic_2p_choice")
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
-	await _shot("game", out_dir, _setup_capture, "capture_mid_attack", 75)
+	_capture_style = CaptureAnimator.Style.BLASTER
+	await _shot("game", out_dir, _setup_capture, "capture_blaster", 0, 0.75)
+	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
+	_capture_style = CaptureAnimator.Style.HAMMER
+	await _shot("game", out_dir, _setup_capture, "capture_hammer", 0, 0.62)
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 2)
 	AppState.last_ranking = [2, 0] as Array[int]
 	await _shot("result", out_dir, func() -> void: pass)
 	get_tree().quit()
 
 
-func _shot(screen_id: String, out_dir: String, setup: Callable, file_name: String = "", frames: int = 40) -> void:
+func _shot(screen_id: String, out_dir: String, setup: Callable, file_name: String = "", frames: int = 40, seconds: float = 0.0) -> void:
 	var packed: PackedScene = load(SceneRouterScript.SCREENS[screen_id])
 	var screen := packed.instantiate()
 	get_tree().root.add_child(screen)
 	await get_tree().process_frame
 	_current = screen
 	setup.call()
-	for i in frames:
-		await get_tree().process_frame
+	if seconds > 0.0:
+		var until := Time.get_ticks_msec() + int(seconds * 1000.0)
+		while Time.get_ticks_msec() < until:
+			await get_tree().process_frame
+	else:
+		for i in frames:
+			await get_tree().process_frame
 	var image := get_viewport().get_texture().get_image()
 	var path := out_dir.path_join((file_name if not file_name.is_empty() else screen_id) + ".png")
 	image.save_png(path)
@@ -54,6 +63,7 @@ func _shot(screen_id: String, out_dir: String, setup: Callable, file_name: Strin
 
 
 var _current: Node
+var _capture_style: int = 0
 
 
 ## Pawns spread around the board, two sharing a square, one in a home column.
@@ -89,7 +99,7 @@ func _setup_capture() -> void:
 	m.state.set_pawn_progress(0, 0, 14)
 	m.state.set_pawn_progress(1, 0, 1)
 	board.sync(m.state)
-	CaptureAnimator.play(board, board.pawn_node(0, 0), board.pawn_node(1, 0), CaptureAnimator.Style.BLASTER, board.cell_size())
+	CaptureAnimator.play(board, board.pawn_node(0, 0), board.pawn_node(1, 0), _capture_style, board.cell_size())
 
 
 ## Two pawns that can move: shows the glowing choice.
