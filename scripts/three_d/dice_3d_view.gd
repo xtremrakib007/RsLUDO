@@ -118,14 +118,18 @@ func _build_scene() -> void:
 	environment.background_mode = Environment.BG_CLEAR_COLOR
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(1, 1, 1)
-	environment.ambient_light_energy = 0.55
+	environment.ambient_light_energy = 0.35
 	var world_env := WorldEnvironment.new()
 	world_env.environment = environment
 	world.add_child(world_env)
 
 	var light := DirectionalLight3D.new()
 	light.rotation = Vector3(deg_to_rad(-55.0), deg_to_rad(35.0), 0.0)
-	light.light_energy = 1.1
+	light.light_energy = 1.0
+	var fill := DirectionalLight3D.new()
+	fill.rotation = Vector3(deg_to_rad(-20.0), deg_to_rad(-120.0), 0.0)
+	fill.light_energy = 0.35
+	world.add_child(fill)
 	world.add_child(light)
 
 	var camera := Camera3D.new()
@@ -154,8 +158,8 @@ func _build_scene() -> void:
 	_holder.add_child(_cube)
 
 	var body := StandardMaterial3D.new()
-	body.albedo_color = Color("fbfbf7")
-	body.roughness = 0.35
+	body.albedo_color = Color("f2f0e8")
+	body.roughness = 0.4
 	_pip_material = StandardMaterial3D.new()
 	_pip_material.albedo_color = pip_color
 	_pip_material.roughness = 0.5
@@ -195,8 +199,8 @@ func _build_rounded_cube(material: Material) -> void:
 
 func _build_pips() -> void:
 	var pip := SphereMesh.new()
-	pip.radius = 0.085
-	pip.height = 0.17
+	pip.radius = 0.1
+	pip.height = 0.2
 	pip.radial_segments = 12
 	pip.rings = 6
 	for face_value in FACES:
@@ -206,9 +210,9 @@ func _build_pips() -> void:
 		var v: Vector3 = axes[2]
 		for spot in PIPS[face_value]:
 			var p: Vector2 = spot
-			var node := _add_mesh(pip, normal * 0.47 + u * p.x * 0.24 + v * p.y * 0.24, Vector3.ZERO, _pip_material)
-			# Flatten each pip against its face.
-			node.scale = Vector3.ONE - normal.abs() * 0.65
+			var node := _add_mesh(pip, normal * 0.5 + u * p.x * 0.25 + v * p.y * 0.25, Vector3.ZERO, _pip_material)
+			# Flatten each pip so it sits on its face like a painted dot.
+			node.scale = Vector3.ONE - normal.abs() * 0.6
 
 
 func _add_mesh(mesh: Mesh, position_3d: Vector3, rotation_3d: Vector3, material: Material) -> MeshInstance3D:
