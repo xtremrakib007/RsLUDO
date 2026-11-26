@@ -90,6 +90,7 @@ static func style_button(b: Button, bg: Color, fg: Color, border_width: int = 0,
 static func add_press_feedback(b: BaseButton) -> void:
 	b.resized.connect(func() -> void: b.pivot_offset = b.size * 0.5)
 	b.button_down.connect(func() -> void: _scale_to(b, 0.95))
+	b.pressed.connect(func() -> void: Sfx.play("click", -4.0, 0.05))
 	b.button_up.connect(func() -> void: _scale_to(b, 1.0))
 
 

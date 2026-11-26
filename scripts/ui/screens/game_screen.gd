@@ -119,20 +119,25 @@ func _play_events(events: Array[GameEvent]) -> void:
 			GameEvent.Type.PAWN_CAPTURED:
 				await _play_capture(d["seat"], d["pawn"], d["victim_seat"], d["victim_pawn"])
 			GameEvent.Type.PAWN_FINISHED:
+				Sfx.play("home")
 				_show_banner("Pawn home!", Palette.seat_color(d["seat"]))
 				await _wait(0.4)
 			GameEvent.Type.PLAYER_FINISHED:
+				Sfx.play("win")
 				_show_banner("%s brought all pawns home!" % _name(d["seat"]), Palette.seat_color(d["seat"]))
 				for pawn in BoardLayout.PAWNS_PER_PLAYER:
 					CaptureAnimator.celebrate(board, board.pawn_node(d["seat"], pawn), board.cell_size())
 				await _wait(1.0)
 			GameEvent.Type.EXTRA_TURN:
+				Sfx.play("extra")
 				_show_banner("Roll again!", Palette.ACCENT)
 				await _wait(0.35)
 			GameEvent.Type.NO_MOVES:
+				Sfx.play("no_move")
 				_show_banner("No moves", Palette.TEXT_MUTED)
 				await _wait(0.7)
 			GameEvent.Type.THREE_SIXES:
+				Sfx.play("no_move")
 				_show_banner("Three sixes - turn over", Palette.TEXT_MUTED)
 				await _wait(0.9)
 	board.sync(local_match.state)

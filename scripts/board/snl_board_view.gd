@@ -73,6 +73,7 @@ func animate_walk(seat: int, from: int, to: int) -> void:
 	for square in range(maxi(from + 1, 1), to + 1):
 		var target := square_center(square) + _pawn_offset()
 		node.next_step(target.x - node.position.x)
+		Sfx.play("step", -4.0, 0.12)
 		var tween := create_tween()
 		tween.tween_property(node, "position", target, HOP_TIME).set_trans(Tween.TRANS_SINE)
 		tween.parallel().tween_method(node.set_hop, 0.0, 1.0, HOP_TIME)
@@ -86,6 +87,7 @@ func animate_climb(seat: int, to: int) -> void:
 	if node == null:
 		return
 	# Hand over hand up the ladder.
+	Sfx.play("climb")
 	var tween := create_tween()
 	tween.tween_property(node, "position", square_center(to) + _pawn_offset(), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tween.parallel().tween_method(node.set_climb, 0.01, 1.0, 0.8)
@@ -106,6 +108,7 @@ func animate_slide(seat: int, from: int, to: int) -> void:
 	_bulge_color = Palette.seat_color(seat)
 
 	# 1. Mouth opens wide; the pawn looks scared.
+	Sfx.play("hiss")
 	node.dizzy = true
 	node.arm_raise = 1.0
 	var tween := create_tween()
@@ -120,11 +123,13 @@ func animate_slide(seat: int, from: int, to: int) -> void:
 	node.visible = false
 
 	# 3. GULP: the mouth snaps shut.
+	Sfx.play("gulp")
 	tween = create_tween()
 	tween.tween_method(_set_mouth, 1.0, 0.0, 0.15)
 	await tween.finished
 
 	# 4. A bulge travels from head to tail.
+	Sfx.play("slide", -3.0)
 	tween = create_tween()
 	tween.tween_method(_set_bulge, 0.0, 1.0, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	await tween.finished
@@ -132,6 +137,7 @@ func animate_slide(seat: int, from: int, to: int) -> void:
 	snake_head = -1
 
 	# 5. Pops out of the tail, dizzy, then recovers.
+	Sfx.play("pop")
 	node.position = square_center(to) + _pawn_offset()
 	node.arm_raise = 0.0
 	node.visible = true

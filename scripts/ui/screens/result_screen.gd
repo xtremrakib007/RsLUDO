@@ -43,6 +43,7 @@ func build() -> void:
 	content.add_child(UIKit.spacer())
 	_add_buttons(true)
 	_celebrate(preview)
+	Sfx.play("win")
 
 
 func _add_buttons(can_replay: bool) -> void:

@@ -79,16 +79,20 @@ func _play_events(events: Array[GameEvent]) -> void:
 				_show_banner("GULP! Down to %d" % d["to"], Palette.SNAKE_BODY)
 				await board.animate_slide(d["seat"], d["from"], d["to"])
 			GameEvent.Type.PLAYER_FINISHED:
+				Sfx.play("win")
 				_show_banner("%s reached 100!" % _name(d["seat"]), Palette.seat_color(d["seat"]))
 				await CaptureAnimator.celebrate(board, board.pawn_node(d["seat"]), board.cell_size())
 				await _wait(0.4)
 			GameEvent.Type.EXTRA_TURN:
+				Sfx.play("extra")
 				_show_banner("Roll again!", Palette.ACCENT)
 				await _wait(0.35)
 			GameEvent.Type.NO_MOVES:
+				Sfx.play("no_move")
 				_show_banner("Need exactly %d to reach 100" % (SnlBoard.LAST_SQUARE - snl_match.state.position_of(d["seat"])), Palette.TEXT_MUTED)
 				await _wait(0.8)
 			GameEvent.Type.THREE_SIXES:
+				Sfx.play("no_move")
 				_show_banner("Three sixes - turn over", Palette.TEXT_MUTED)
 				await _wait(0.9)
 	board.sync(snl_match.state)

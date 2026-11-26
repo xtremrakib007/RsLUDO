@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 AppState="*res://scripts/autoload/app_state.gd"
 SceneRouter="*res://scripts/autoload/scene_router.gd"
 UiTheme="*res://scripts/autoload/ui_theme.gd"
+Sfx="*res://scripts/autoload/sfx.gd"
 
 [display]
 

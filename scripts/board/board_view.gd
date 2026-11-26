@@ -103,6 +103,7 @@ func animate_move(seat: int, pawn: int, from: int, to: int) -> void:
 	for p in steps:
 		var target := grid_to_local(BoardLayout.progress_point(seat, p)) + _pawn_offset()
 		node.next_step(target.x - node.position.x)
+		Sfx.play("step", -4.0, 0.12)
 		var tween := create_tween()
 		tween.tween_property(node, "position", target, HOP_TIME).set_trans(Tween.TRANS_SINE)
 		tween.parallel().tween_method(node.set_hop, 0.0, 1.0, HOP_TIME)

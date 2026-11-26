@@ -72,11 +72,13 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 	match style:
 		Style.BLASTER:
 			var beam_color := Color.from_hsv(randf(), 0.65, 1.0)
+			Sfx.play("charge")
 			await _effect(host, CaptureEffect.Kind.CHARGE, attacker.hand_position(), attacker.hand_position(), beam_color, cell, "", 0.45)
 			tween = host.create_tween()
 			tween.tween_property(attacker, "position", centre - gap * 1.25, 0.06)
 			tween.tween_property(attacker, "position", centre - gap, 0.18)
 			_effect(host, CaptureEffect.Kind.FLASH, attacker.hand_position(), attacker.hand_position(), Color.WHITE, cell * 0.6, "", 0.2)
+			Sfx.play("zap")
 			await _effect(host, CaptureEffect.Kind.BEAM, attacker.hand_position(), target, beam_color, cell, "", 0.35)
 			_impact(host, target, beam_color, cell, "ZAP!", 1.0)
 		Style.SWORD:
@@ -90,6 +92,7 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 				tween.tween_property(attacker, "prop_angle", -from_angle, 0.1).from(from_angle)
 				var slash := CaptureEffect.create(CaptureEffect.Kind.SLASH, target, target, Color("bfe9ff"), cell * 0.9)
 				slash.angle = i * 1.1
+				Sfx.play("swish", 0.0, 0.15)
 				_run(host, slash, 0.3)
 				_shake(host, 0.012, 0.12)
 				await tween.finished
@@ -106,14 +109,17 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 			await tween.finished
 			attacker.squash = Vector2.ONE
 			victim.squash = Vector2(1.7, 0.3)
+			Sfx.play("bonk")
 			_effect(host, CaptureEffect.Kind.SHOCKWAVE, victim.position, victim.position, Color("ffcf70"), cell * 1.2, "", 0.5)
 			_impact(host, target, Color("ff9f43"), cell, "BONK!", 1.3)
 		_:
 			tween = host.create_tween()
 			tween.tween_property(attacker, "prop_angle", 0.6, 0.3).from(-0.6).set_trans(Tween.TRANS_SINE)
 			await tween.finished
+			Sfx.play("charge", 0.0, 0.1)
 			await _effect(host, CaptureEffect.Kind.CHARGE, attacker.hand_position(), attacker.hand_position(), Color("d9a7ff"), cell, "", 0.3)
 			await _effect(host, CaptureEffect.Kind.SPARKLES, attacker.hand_position(), target, Color.WHITE, cell, "", 0.4)
+			Sfx.play("poof")
 			_effect(host, CaptureEffect.Kind.POOF, target, target, Color.WHITE, cell * 1.3, "", 0.7)
 			_impact(host, target, Color("d9a7ff"), cell, "POOF!", 0.9)
 
@@ -142,6 +148,8 @@ static func play(host: Control, attacker: PawnToken, victim: PawnToken, style: i
 ## Sends a pawn flying in a high, spinning arc to `home`, zooming the camera back out.
 static func knockback(host: Control, pawn: PawnToken, home: Vector2, cell: float, zoom_out: bool) -> void:
 	var start := pawn.position
+	Sfx.play("ko")
+	Sfx.play("whoosh", -2.0)
 	_effect(host, CaptureEffect.Kind.BURST, start + Vector2(0, -cell), start + Vector2(0, -cell), Color("ff5d5d"), cell * 2.2, "K.O.!", 1.0)
 	var flight := host.create_tween().set_parallel()
 	pawn.fly_start = start
@@ -155,6 +163,7 @@ static func knockback(host: Control, pawn: PawnToken, home: Vector2, cell: float
 	pawn.rotation = 0.0
 	pawn.position = home
 	host.rotation = 0.0
+	Sfx.play("thud")
 	if zoom_out:
 		host.z_index = 0
 	_effect(host, CaptureEffect.Kind.DUST, home + Vector2(0, cell * 0.4), home + Vector2(0, cell * 0.4), Color.WHITE, cell, "", 0.4)
@@ -166,6 +175,7 @@ static func knockback(host: Control, pawn: PawnToken, home: Vector2, cell: float
 
 ## Impact: flash, shockwave, debris, comic burst and a board shake.
 static func _impact(host: Control, at: Vector2, color: Color, cell: float, word: String, strength: float) -> void:
+	Sfx.play("impact", 0.0, 0.05)
 	_effect(host, CaptureEffect.Kind.FLASH, at, at, Color.WHITE, cell * strength, "", 0.25)
 	_effect(host, CaptureEffect.Kind.SHOCKWAVE, at, at, color, cell * strength, "", 0.45)
 	_effect(host, CaptureEffect.Kind.DEBRIS, at, at, color, cell * strength, "", 0.8)
@@ -185,6 +195,7 @@ static func _shake(host: Control, amount: float, duration: float) -> void:
 
 ## A happy double jump with confetti.
 static func celebrate(host: Node, pawn: PawnToken, cell: float) -> void:
+	Sfx.play("cheer", -2.0, 0.08)
 	_effect(host, CaptureEffect.Kind.CONFETTI, pawn.position, pawn.position + Vector2(0, -cell * 0.8), Color.WHITE, cell, "", 1.0)
 	var tween := host.create_tween()
 	for i in 2:
