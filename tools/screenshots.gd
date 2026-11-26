@@ -30,10 +30,13 @@ func _ready() -> void:
 	await _shot("game", out_dir, _setup_choice, "game_classic_2p_choice")
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
 	_capture_style = CaptureAnimator.Style.BLASTER
-	await _shot("game", out_dir, _setup_capture, "capture_blaster", 0, 0.75)
+	await _shot("game", out_dir, _setup_capture, "capture_blaster", 0, 1.25)
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
 	_capture_style = CaptureAnimator.Style.HAMMER
-	await _shot("game", out_dir, _setup_capture, "capture_hammer", 0, 0.62)
+	await _shot("game", out_dir, _setup_capture, "capture_hammer", 0, 1.3)
+	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
+	_capture_style = CaptureAnimator.Style.SWORD
+	await _shot("game", out_dir, _setup_capture, "capture_knockout", 0, 2.05)
 	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, 2)
 	AppState.match_config.board_id = "classic"
 	await _shot("snl_game", out_dir, _setup_snake_bite, "snake_mouth_open", 0, 0.45)
@@ -103,7 +106,7 @@ func _setup_capture() -> void:
 	m.state.set_pawn_progress(0, 0, 14)
 	m.state.set_pawn_progress(1, 0, 1)
 	board.sync(m.state)
-	CaptureAnimator.play(board, board.pawn_node(0, 0), board.pawn_node(1, 0), _capture_style, board.cell_size())
+	CaptureAnimator.play(board, board.pawn_node(0, 0), board.pawn_node(1, 0), _capture_style, board.cell_size(), board.base_position(1, 0))
 
 
 ## Red stands on the head of the snake 54 -> 31 and gets eaten.

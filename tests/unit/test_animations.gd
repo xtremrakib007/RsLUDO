@@ -50,10 +50,12 @@ func test_prop_shows_only_during_the_capture_sequence() -> void:
 	var victim := board.pawn_node(1, 0)
 	assert_eq(attacker.prop, PawnToken.Prop.NONE, "no prop before")
 	for style in CaptureAnimator.Style.size():
-		CaptureAnimator.play(board, attacker, victim, style, board.cell_size())
-		await _wait_seconds(0.5)
+		CaptureAnimator.play(board, attacker, victim, style, board.cell_size(), board.base_position(1, 0))
+		await _wait_seconds(0.8)
 		assert_true(attacker.prop != PawnToken.Prop.NONE, "style %d: prop in hand during the attack" % style)
-		await _wait_seconds(2.0)
+		await _wait_seconds(3.5)
+		assert_eq(board.scale, Vector2.ONE, "style %d: camera zoomed back out" % style)
+		assert_true(victim.position.distance_to(board.base_position(1, 0)) < 1.0, "style %d: opponent landed in base" % style)
 		assert_eq(attacker.prop, PawnToken.Prop.NONE, "style %d: prop gone afterwards" % style)
 		assert_eq(attacker.arm_raise, 0.0, "style %d: arm back down" % style)
 		assert_false(victim.dizzy, "style %d: victim recovered" % style)
@@ -69,7 +71,7 @@ func test_capture_on_screen_plays_the_animation() -> void:
 	(screen.get("board") as BoardView).sync(local_match.state)
 	local_match.dice.queue_rolls([3] as Array[int])
 	screen.call("_on_dice_pressed")
-	await _wait_seconds(7.0)
+	await _wait_seconds(9.0)
 	assert_eq(screen.get("captures_played"), 1, "one capture animation")
 	assert_eq(local_match.state.pawn_progress(1, 0), MatchState.IN_BASE, "victim back in base")
 	var board: BoardView = screen.get("board")
@@ -124,4 +126,20 @@ func test_snake_swallows_the_pawn_and_it_pops_out_at_the_tail() -> void:
 	assert_eq(view.snake_bulge, -1.0, "no bulge left")
 	assert_eq(view.snake_mouth, 0.0, "mouth closed")
 	view.queue_free()
+	await tree.process_frame
+
+
+func test_3d_dice_lands_on_the_rolled_value() -> void:
+	var dice := Dice3DView.new()
+	dice.size = Vector2(128, 128)
+	tree.root.add_child(dice)
+	await tree.process_frame
+	for face in range(1, 7):
+		dice.value = face
+		assert_eq(dice.top_face(), face, "showing %d puts %d on top" % [face, face])
+	for face in [3, 6, 1]:
+		await dice.roll_to(face)
+		assert_eq(dice.top_face(), face, "rolled %d lands on %d" % [face, face])
+		assert_eq(dice.value, face)
+	dice.queue_free()
 	await tree.process_frame
