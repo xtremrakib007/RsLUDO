@@ -46,6 +46,9 @@ func _player_row(player: LudoPlayer) -> Control:
 	fields.add_child(UIKit.title(player.color_name().to_upper(), 20, player.color()))
 	var edit := LineEdit.new()
 	edit.text = player.display_name
+	# Player 1 defaults to the profile name, so wins count in the profile.
+	if player == _config.players[0] and AppState.has_profile() and player.display_name == "%s Player" % player.color_name():
+		edit.text = AppState.guest_name
 	edit.placeholder_text = "%s Player" % player.color_name()
 	edit.max_length = MAX_NAME_LENGTH
 	edit.select_all_on_focus = true

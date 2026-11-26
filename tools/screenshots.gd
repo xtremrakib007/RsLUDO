@@ -18,6 +18,11 @@ func _ready() -> void:
 
 	await _shot("home", out_dir, func() -> void: pass)
 	await _shot("settings", out_dir, func() -> void: pass)
+	AppState.record_match(MatchConfig.create(ClassicMode.ID, 4), [1, 0, 3, 2] as Array[int])
+	AppState.record_match(MatchConfig.create(SnakesLaddersMode.ID, 2), [0, 2] as Array[int])
+	await _shot("profile", out_dir, func() -> void: pass)
+	await _shot("history", out_dir, func() -> void: pass)
+	await _shot("rules", out_dir, func() -> void: pass)
 	AppState.pending_mode_id = SnakesLaddersMode.ID
 	await _shot("player_select", out_dir, func() -> void: pass)
 	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, 4)

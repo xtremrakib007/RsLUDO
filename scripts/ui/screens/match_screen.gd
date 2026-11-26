@@ -277,6 +277,7 @@ func _wait(seconds: float) -> void:
 
 func _finish_match(ranking: Array[int]) -> void:
 	AppState.last_ranking = ranking
+	AppState.record_match(_config, ranking)
 	await _wait(1.2)
 	SceneRouter.goto("result")
 

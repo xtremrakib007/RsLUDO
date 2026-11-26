@@ -34,28 +34,35 @@ func build() -> void:
 		var b := UIKit.button(item, UIKit.ButtonKind.SECONDARY, 90)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.add_theme_font_size_override("font_size", 28)
-		if item == "Settings":
-			b.pressed.connect(SceneRouter.goto.bind("settings"))
-		else:
-			b.pressed.connect(show_toast.bind("%s arrives in a later update." % item))
+		b.pressed.connect(SceneRouter.goto.bind(item.to_lower()))
 		bottom.add_child(b)
 	content.add_child(bottom)
 
 
 func _profile_header() -> Control:
+	# The whole header is a button that opens the profile.
+	var header := Button.new()
+	header.custom_minimum_size = Vector2(0, 112)
+	header.focus_mode = Control.FOCUS_NONE
+	UIKit.style_button(header, Color(0, 0, 0, 0), Palette.TEXT, 0, 24)
 	var row := HBoxContainer.new()
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	row.add_theme_constant_override("separation", 20)
-	var avatar := PawnPreview.new(0)
-	avatar.custom_minimum_size = Vector2(96, 96)
+	var avatar := PawnPreview.new(AppState.avatar_seat)
+	avatar.custom_minimum_size = Vector2(96, 108)
 	row.add_child(avatar)
 	var names := VBoxContainer.new()
 	names.alignment = BoxContainer.ALIGNMENT_CENTER
 	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var display_name: String = AppState.guest_name if AppState.has_profile() else "Guest"
 	names.add_child(UIKit.title(display_name, 38))
-	names.add_child(UIKit.label("Playing offline as a guest", 24, Palette.TEXT_MUTED))
+	names.add_child(UIKit.label("%d games  -  %d wins  -  tap to edit" % [AppState.matches_played(), AppState.wins()], 22, Palette.TEXT_MUTED))
 	row.add_child(names)
-	return row
+	header.add_child(row)
+	UIKit.ignore_mouse_recursive(header)
+	UIKit.add_press_feedback(header)
+	header.pressed.connect(SceneRouter.goto.bind("profile"))
+	return header
 
 
 func _coming_soon_tile(feature: String) -> Button:

@@ -13,6 +13,9 @@ const SCREENS := {
 	"board_select": "res://scenes/screens/board_select.tscn",
 	"snl_game": "res://scenes/screens/snl_game.tscn",
 	"settings": "res://scenes/screens/settings.tscn",
+	"profile": "res://scenes/screens/profile.tscn",
+	"history": "res://scenes/screens/history.tscn",
+	"rules": "res://scenes/screens/rules.tscn",
 }
 const FADE_TIME := 0.16
 
