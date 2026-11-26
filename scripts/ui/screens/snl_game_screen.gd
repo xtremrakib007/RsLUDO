@@ -76,8 +76,7 @@ func _play_events(events: Array[GameEvent]) -> void:
 				await _wait(0.25)
 				await board.animate_climb(d["seat"], d["to"])
 			GameEvent.Type.SNAKE_SLIDE:
-				_show_banner("Snake! Down to %d" % d["to"], Palette.SNAKE_BODY)
-				await _wait(0.25)
+				_show_banner("GULP! Down to %d" % d["to"], Palette.SNAKE_BODY)
 				await board.animate_slide(d["seat"], d["from"], d["to"])
 			GameEvent.Type.PLAYER_FINISHED:
 				_show_banner("%s reached 100!" % _name(d["seat"]), Palette.seat_color(d["seat"]))

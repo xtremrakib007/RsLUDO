@@ -34,6 +34,10 @@ func _ready() -> void:
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
 	_capture_style = CaptureAnimator.Style.HAMMER
 	await _shot("game", out_dir, _setup_capture, "capture_hammer", 0, 0.62)
+	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, 2)
+	AppState.match_config.board_id = "classic"
+	await _shot("snl_game", out_dir, _setup_snake_bite, "snake_mouth_open", 0, 0.45)
+	await _shot("snl_game", out_dir, _setup_snake_bite, "snake_bulge", 0, 1.25)
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 2)
 	AppState.last_ranking = [2, 0] as Array[int]
 	await _shot("result", out_dir, func() -> void: pass)
@@ -100,6 +104,16 @@ func _setup_capture() -> void:
 	m.state.set_pawn_progress(1, 0, 1)
 	board.sync(m.state)
 	CaptureAnimator.play(board, board.pawn_node(0, 0), board.pawn_node(1, 0), _capture_style, board.cell_size())
+
+
+## Red stands on the head of the snake 54 -> 31 and gets eaten.
+func _setup_snake_bite() -> void:
+	var m: SnlMatch = _current.get("snl_match")
+	var board: SnlBoardView = _current.get("board")
+	m.state.set_position(0, 54)
+	m.state.set_position(2, 12)
+	board.sync(m.state)
+	board.animate_slide(0, 54, 31)
 
 
 ## Two pawns that can move: shows the glowing choice.

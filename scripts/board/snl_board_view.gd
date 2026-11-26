@@ -93,34 +93,70 @@ func animate_climb(seat: int, to: int) -> void:
 	node.set_climb(0.0)
 
 
-## Slides down a snake, following its body from head to tail.
+## The snake eats the pawn: mouth opens, the pawn is pulled in, the mouth snaps
+## shut, a bulge travels down the body, and the pawn pops out of the tail, dizzy.
 func animate_slide(seat: int, from: int, to: int) -> void:
 	var node := pawn_node(seat)
 	if node == null:
 		return
-	_slide_path = SnakeArt.body_path(_snake_anchors(from, to), cell_size())
-	_slide_path.reverse()
-	_slide_node = node
-	# Arms up, "wheee", down the snake's back.
-	node.arm_raise = 1.0
+	var cs := cell_size()
+	var anchors := _snake_anchors(from, to)
+	snake_head = from
+	snake_bulge = -1.0
+	_bulge_color = Palette.seat_color(seat)
+
+	# 1. Mouth opens wide; the pawn looks scared.
 	node.dizzy = true
+	node.arm_raise = 1.0
 	var tween := create_tween()
-	tween.tween_method(_slide_step, 0.0, 1.0, 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_method(_set_mouth, 0.0, 1.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await tween.finished
-	node.rotation = 0.0
+
+	# 2. Pulled into the mouth, shrinking.
+	tween = create_tween().set_parallel()
+	tween.tween_property(node, "position", SnakeArt.mouth_point(anchors, cs), 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(node, "scale", Vector2(0.15, 0.15), 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await tween.finished
+	node.visible = false
+
+	# 3. GULP: the mouth snaps shut.
+	tween = create_tween()
+	tween.tween_method(_set_mouth, 1.0, 0.0, 0.15)
+	await tween.finished
+
+	# 4. A bulge travels from head to tail.
+	tween = create_tween()
+	tween.tween_method(_set_bulge, 0.0, 1.0, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+	_set_bulge(-1.0)
+	snake_head = -1
+
+	# 5. Pops out of the tail, dizzy, then recovers.
+	node.position = square_center(to) + _pawn_offset()
 	node.arm_raise = 0.0
+	node.visible = true
+	tween = create_tween()
+	tween.tween_property(node, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.35)
+	await tween.finished
 	node.dizzy = false
 
 
-var _slide_path := PackedVector2Array()
-var _slide_node: PawnToken
+## Which snake (by head square) is animating, its mouth and bulge (for drawing and tests).
+var snake_head: int = -1
+var snake_mouth: float = 0.0
+var snake_bulge: float = -1.0
+var _bulge_color: Color = Color.WHITE
 
 
-func _slide_step(t: float) -> void:
-	if _slide_node == null:
-		return
-	_slide_node.position = _point_along(_slide_path, t) + _pawn_offset()
-	_slide_node.rotation = sin(t * TAU * 3.0) * 0.25
+func _set_mouth(value: float) -> void:
+	snake_mouth = value
+	queue_redraw()
+
+
+func _set_bulge(value: float) -> void:
+	snake_bulge = value
+	queue_redraw()
 
 
 func _point_along(path: PackedVector2Array, t: float) -> Vector2:
@@ -199,7 +235,11 @@ func _draw() -> void:
 		_draw_ladder(int(bottom), int(board.ladders[bottom]), cs)
 	var index := 0
 	for head in board.snakes:
-		SnakeArt.draw_snake(self, _snake_anchors(int(head), int(board.snakes[head])), cs, Palette.snake_color(index))
+		var anchors := _snake_anchors(int(head), int(board.snakes[head]))
+		if int(head) == snake_head:
+			SnakeArt.draw_snake(self, anchors, cs, Palette.snake_color(index), snake_mouth, snake_bulge, _bulge_color)
+		else:
+			SnakeArt.draw_snake(self, anchors, cs, Palette.snake_color(index))
 		index += 1
 
 

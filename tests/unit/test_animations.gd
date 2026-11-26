@@ -96,3 +96,32 @@ func test_no_animation_and_no_prop_without_a_capture() -> void:
 	assert_eq(local_match.state.pawn_progress(0, 0), 15)
 	screen.queue_free()
 	await tree.process_frame
+
+
+func test_snake_swallows_the_pawn_and_it_pops_out_at_the_tail() -> void:
+	var view := SnlBoardView.new()
+	view.size = Vector2(600, 660)
+	view.setup(SnlBoard.create("t", "T", "", {}, {27: 5}), [0] as Array[int])
+	tree.root.add_child(view)
+	await tree.process_frame
+	var state := SnlState.create([0] as Array[int])
+	state.set_position(0, 27)
+	view.sync(state)
+	var pawn := view.pawn_node(0)
+	view.animate_slide(0, 27, 5)
+	await _wait_seconds(0.2)
+	assert_eq(view.snake_head, 27, "the snake on 27 is animating")
+	assert_true(view.snake_mouth > 0.5, "mouth opens wide")
+	await _wait_seconds(0.55)
+	assert_false(pawn.visible, "pawn swallowed")
+	await _wait_seconds(0.5)
+	assert_true(view.snake_bulge > 0.0 and view.snake_bulge < 1.0, "bulge travelling down the body")
+	await _wait_seconds(1.3)
+	assert_true(pawn.visible, "pawn popped out")
+	assert_eq(pawn.scale, Vector2.ONE, "back to full size")
+	assert_true(pawn.position.distance_to(view.square_center(5)) < view.cell_size(), "at the snake's tail")
+	assert_eq(view.snake_head, -1, "snake back to normal")
+	assert_eq(view.snake_bulge, -1.0, "no bulge left")
+	assert_eq(view.snake_mouth, 0.0, "mouth closed")
+	view.queue_free()
+	await tree.process_frame
