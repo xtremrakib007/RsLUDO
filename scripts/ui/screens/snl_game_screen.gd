@@ -40,7 +40,7 @@ func snl_match_board_title() -> String:
 
 
 func _fit_board() -> void:
-	var width := size.x - 72.0
+	var width := minf(size.x, MAX_CONTENT_WIDTH) - 72.0
 	var height := minf(width / SnlBoard.SIZE * (SnlBoard.SIZE + SnlBoardView.START_ROWS), size.y - NON_BOARD_HEIGHT)
 	board.custom_minimum_size = Vector2(0, maxf(height, 300.0))
 

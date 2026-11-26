@@ -39,7 +39,7 @@ func build() -> void:
 
 
 func _fit_board() -> void:
-	var side := minf(size.x - 72.0, size.y - NON_BOARD_HEIGHT)
+	var side := minf(minf(size.x, MAX_CONTENT_WIDTH) - 72.0, size.y - NON_BOARD_HEIGHT)
 	board.custom_minimum_size = Vector2(0, maxf(side, 280.0))
 
 

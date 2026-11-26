@@ -3,7 +3,12 @@ extends Control
 ## Common screen frame: background, margins, a vertical content column,
 ## headers and toasts. Screens override build() and handle_back().
 
+## Widest the content column gets on tablets and in landscape; the rest is side margin.
+const MAX_CONTENT_WIDTH := 860.0
+const SIDE_MARGIN := 36
+
 var content: VBoxContainer
+var _margin: MarginContainer
 var _toast: Control
 
 
@@ -12,8 +17,9 @@ func _ready() -> void:
 	_build_background()
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 36)
-	margin.add_theme_constant_override("margin_right", 36)
+	_margin = margin
+	resized.connect(_fit_width)
+	_fit_width()
 	margin.add_theme_constant_override("margin_top", 56)
 	margin.add_theme_constant_override("margin_bottom", 44)
 	add_child(margin)
@@ -21,6 +27,15 @@ func _ready() -> void:
 	content.add_theme_constant_override("separation", 24)
 	margin.add_child(content)
 	build()
+
+
+## Keeps the content column phone-shaped and centred on wide screens (iPad, landscape).
+func _fit_width() -> void:
+	if _margin == null:
+		return
+	var side := maxi(SIDE_MARGIN, int((size.x - MAX_CONTENT_WIDTH) * 0.5))
+	_margin.add_theme_constant_override("margin_left", side)
+	_margin.add_theme_constant_override("margin_right", side)
 
 
 ## Override to add the screen's controls to `content`.
