@@ -1,11 +1,20 @@
 class_name BoardView
 extends Control
-## Draws the Ludo board and places pawns. Pure presentation: it reads geometry
-## from BoardLayout and never decides game rules.
+## Draws the Ludo board and its pawns, plays move animations and reports taps on
+## movable pawns. Pure presentation: positions come from MatchState and moves
+## come from rules events; the board never decides anything itself.
 ## The board is always square and centred inside this control.
 
+signal pawn_tapped(seat: int, pawn: int)
+
+const HOP_TIME := 0.15
+const RETURN_TIME := 0.45
+
 var active_seats: Array[int] = [0, 1, 2, 3]
-var _pawns: Array[PawnToken] = []
+## Vector2i(seat, pawn) -> PawnToken
+var _pawns: Dictionary = {}
+var _state: MatchState = null
+var _selectable: Array[Vector2i] = []
 
 
 func _ready() -> void:
@@ -26,6 +35,10 @@ func pawn_count() -> int:
 	return _pawns.size()
 
 
+func pawn_node(seat: int, pawn: int) -> PawnToken:
+	return _pawns.get(Vector2i(seat, pawn))
+
+
 func cell_size() -> float:
 	return minf(size.x, size.y) / BoardLayout.GRID_SIZE
 
@@ -44,40 +57,147 @@ func cell_rect(cell: Vector2i) -> Rect2:
 	return Rect2(grid_to_local(Vector2(cell)), Vector2.ONE * cell_size())
 
 
+# --- Pawns --------------------------------------------------------------
+
+## Places every pawn where the match state says, spreading out pawns that share a square.
+func sync(state: MatchState) -> void:
+	_state = state
+	_layout_pawns()
+
+
+## Marks pawns the current player may move. Taps on them emit pawn_tapped.
+func set_selectable(ids: Array[Vector2i]) -> void:
+	_selectable = ids.duplicate()
+	for id in _pawns:
+		var pawn: PawnToken = _pawns[id]
+		pawn.highlighted = _selectable.has(id)
+		if pawn.highlighted:
+			move_child(pawn, get_child_count() - 1)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE if _selectable.is_empty() else Control.MOUSE_FILTER_STOP
+
+
+## Walks a pawn square by square between two progress values (any direction).
+func animate_move(seat: int, pawn: int, from: int, to: int) -> void:
+	var node := pawn_node(seat, pawn)
+	if node == null or from == to:
+		return
+	if to == MatchState.IN_BASE:
+		await animate_to_base(seat, pawn)
+		return
+	var steps: Array[int] = []
+	if from == MatchState.IN_BASE:
+		steps.append(0)
+	elif to > from:
+		for p in range(from + 1, to + 1):
+			steps.append(p)
+	else:
+		for p in range(from - 1, to - 1, -1):
+			steps.append(p)
+	node.radius = cell_size() * 0.52
+	move_child(node, get_child_count() - 1)
+	for p in steps:
+		var target := grid_to_local(BoardLayout.progress_point(seat, p)) + _pawn_offset()
+		node.next_step(target.x - node.position.x)
+		var tween := create_tween()
+		tween.tween_property(node, "position", target, HOP_TIME).set_trans(Tween.TRANS_SINE)
+		tween.parallel().tween_method(node.set_hop, 0.0, 1.0, HOP_TIME)
+		await tween.finished
+	node.set_hop(0.0)
+
+
+## Sends a pawn back to its base slot after a capture.
+func animate_to_base(seat: int, pawn: int) -> void:
+	var node := pawn_node(seat, pawn)
+	if node == null:
+		return
+	move_child(node, get_child_count() - 1)
+	var target := grid_to_local(BoardLayout.base_slot_points(seat)[pawn]) + _pawn_offset()
+	var tween := create_tween()
+	tween.tween_property(node, "position", target, RETURN_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(node, "rotation", TAU, RETURN_TIME)
+	await tween.finished
+	node.rotation = 0.0
+	node.radius = cell_size() * 0.52
+
+
+func _gui_input(event: InputEvent) -> void:
+	var press := event as InputEventMouseButton
+	if press == null or not press.pressed or press.button_index != MOUSE_BUTTON_LEFT or _selectable.is_empty():
+		return
+	var best := Vector2i(-1, -1)
+	var best_distance := cell_size() * 1.2
+	for id in _selectable:
+		var node := pawn_node(id.x, id.y)
+		if node == null:
+			continue
+		var distance := node.position.distance_to(press.position)
+		if distance < best_distance:
+			best_distance = distance
+			best = id
+	if best.x >= 0:
+		accept_event()
+		pawn_tapped.emit(best.x, best.y)
+
+
 func _on_resized() -> void:
 	_layout_pawns()
 	queue_redraw()
 
 
-func _seat_color(seat: int) -> Color:
-	if active_seats.has(seat):
-		return Palette.seat_color(seat)
-	return Palette.inactive_seat_color(seat)
-
-
 func _rebuild_pawns() -> void:
-	for pawn in _pawns:
-		pawn.queue_free()
+	for id in _pawns:
+		(_pawns[id] as PawnToken).queue_free()
 	_pawns.clear()
 	for seat in active_seats:
 		for i in BoardLayout.PAWNS_PER_PLAYER:
 			var pawn := PawnToken.new()
 			pawn.seat = seat
 			add_child(pawn)
-			_pawns.append(pawn)
+			_pawns[Vector2i(seat, i)] = pawn
 	_layout_pawns()
+
+
+func _pawn_offset() -> Vector2:
+	return Vector2(0, -cell_size() * 0.12)
+
+
+func _grid_point_for(seat: int, pawn: int) -> Vector2:
+	var p := MatchState.IN_BASE if _state == null else _state.pawn_progress(seat, pawn)
+	if p == MatchState.IN_BASE:
+		return BoardLayout.base_slot_points(seat)[pawn]
+	return BoardLayout.progress_point(seat, p)
 
 
 func _layout_pawns() -> void:
 	var cs := cell_size()
-	var index := 0
-	for seat in active_seats:
-		var slots := BoardLayout.base_slot_points(seat)
-		for i in BoardLayout.PAWNS_PER_PLAYER:
-			var pawn: PawnToken = _pawns[index]
-			pawn.radius = cs * 0.52
-			pawn.position = grid_to_local(slots[i]) - Vector2(0, cs * 0.12)
-			index += 1
+	var groups := {}
+	for id in _pawns:
+		var point := _grid_point_for(id.x, id.y)
+		if not groups.has(point):
+			groups[point] = []
+		groups[point].append(id)
+	for point in groups:
+		var members: Array = groups[point]
+		var count := members.size()
+		for j in count:
+			var id: Vector2i = members[j]
+			var node := pawn_node(id.x, id.y)
+			var offset := Vector2.ZERO
+			var radius := cs * 0.52
+			if count > 1:
+				var angle := TAU * j / count - PI / 2.0
+				offset = Vector2(cos(angle), sin(angle)) * cs * 0.26
+				radius = cs * 0.42
+			node.position = grid_to_local(point) + offset + _pawn_offset()
+			node.radius = radius
+
+
+# --- Drawing ------------------------------------------------------------
+
+func _seat_color(seat: int) -> Color:
+	if active_seats.has(seat):
+		return Palette.seat_color(seat)
+	return Palette.inactive_seat_color(seat)
 
 
 func _draw() -> void:

@@ -15,13 +15,16 @@ Each phase ends with a review. The next phase starts only after approval.
 - [x] Test runner and tests for board geometry, match setup, rules config and screen smoke tests
 - [x] GitHub Actions workflow running the tests headless
 
-## Phase 2: Classic Ludo rules
+## Phase 2: Classic Ludo rules (done, awaiting review)
 
-- Dice with an injectable random generator, plus dice roll animation
-- `MatchState` + `LudoRules`: start a pawn, legal moves, safe squares, captures, home column, exact finish, extra turns, three sixes, winner order
-- Turn flow for 2 and 4 local players; tap a pawn to move; skip when no move
-- Restart match; match result screen
-- Tests: dice, legal movement, starting, safe squares, captures, home path, winning, restart
+- [x] Dice with an injectable random generator, and a dice roll animation
+- [x] `MatchState` + `LudoRules` (pure functions producing `GameEvent`s): start a pawn, legal moves, safe squares, captures, blocks (optional), home column, exact finish, extra turns (six, capture, finishing a pawn), three sixes, winner and ranking
+- [x] Turn flow for 2 and 4 local players: tap the dice, tap a glowing pawn; the only possible move is made automatically; no-move turns pass
+- [x] Pawns hop square by square; captured pawns fly back to base
+- [x] Restart match (pause menu) and a match result screen with Play Again
+- [x] Snakes & Ladders replaces Snake Ludo (owner decision): 1-100 board, one pawn per player, five original boards on a Choose Board screen, ladders up, snakes down (landing square only), exact roll for 100, six rolls again
+- [x] Tighter game layout; Android debug APK built on every push; CI screenshots on the `ci-screenshots` branch
+- [x] Tests: dice, legal movement, starting, safe squares, captures, home path, winning, three sixes, restart, no capture event without a capture; Snakes & Ladders squares, boards, ladders, snake heads, passing a snake, exact 100, ranking
 
 ## Phase 3: Character animation
 
@@ -30,12 +33,10 @@ Each phase ends with a review. The next phase starts only after approval.
 - Victory celebration
 - Tests: laser sequence only after a successful capture
 
-## Phase 4: Snake Ludo
+## Phase 4: Snakes & Ladders polish
 
-- Snake data (mouth square, body path) per board
-- Snake art and idle motion; bite animation (family-friendly)
-- Bite only on an exact landing on the mouth square; passing over does nothing; configured penalty applied
-- Tests: mouth landing detection, passing over, penalty
+- Animated snakes (idle motion) and a family-friendly slide animation for the characters
+- More boards if wanted
 
 ## Phase 5: Polish and Android
 

@@ -23,7 +23,7 @@ func build() -> void:
 	var rules_box := VBoxContainer.new()
 	rules_box.add_theme_constant_override("separation", 6)
 	rules_box.add_child(UIKit.section_label("Rules for this match"))
-	for line in _config.rules.summary():
+	for line in mode.rules_summary(_config):
 		rules_box.add_child(UIKit.label("-  " + line, 24, Palette.TEXT_MUTED, HORIZONTAL_ALIGNMENT_LEFT, true))
 	rules_card.add_child(rules_box)
 	content.add_child(rules_card)
@@ -62,8 +62,9 @@ func _start() -> void:
 		var player: LudoPlayer = _config.players[i]
 		var entered: String = _name_edits[i].text.strip_edges()
 		player.display_name = entered if not entered.is_empty() else "%s Player" % player.color_name()
-	SceneRouter.goto("game")
+	SceneRouter.goto(ModeRegistry.get_mode(_config.mode_id).game_screen)
 
 
 func handle_back() -> void:
-	SceneRouter.goto("player_select")
+	var mode := ModeRegistry.get_mode(_config.mode_id)
+	SceneRouter.goto("board_select" if mode != null and mode.has_board_choice else "player_select")

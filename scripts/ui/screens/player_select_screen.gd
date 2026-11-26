@@ -82,7 +82,7 @@ func _refresh_options() -> void:
 
 func _continue() -> void:
 	AppState.match_config = MatchConfig.create(_mode.id, _count)
-	SceneRouter.goto("lobby")
+	SceneRouter.goto("board_select" if _mode.has_board_choice else "lobby")
 
 
 func handle_back() -> void:

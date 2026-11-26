@@ -4,7 +4,7 @@ extends RefCounted
 
 
 static func all_modes() -> Array[GameMode]:
-	var modes: Array[GameMode] = [ClassicMode.new(), SnakeMode.new()]
+	var modes: Array[GameMode] = [ClassicMode.new(), SnakesLaddersMode.new()]
 	return modes
 
 

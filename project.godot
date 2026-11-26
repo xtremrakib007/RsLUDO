@@ -5,7 +5,7 @@ config_version=5
 
 [application]
 
-config/name="Ludo Social"
+config/name="RS Ludo"
 config/description="Family-friendly Ludo with human-like pawns and a Snake Ludo mode."
 config/version="0.1.0"
 run/main_scene="res://scenes/screens/splash.tscn"

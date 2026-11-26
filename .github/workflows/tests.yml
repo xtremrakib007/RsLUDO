@@ -38,3 +38,49 @@ jobs:
             echo "Script errors found (see above)."
             exit 1
           fi
+
+  screenshots:
+    name: Screenshots for review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 15
+    env:
+      GODOT_VERSION: 4.4.1-stable
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install a virtual display and software OpenGL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+      - name: Download Godot
+        run: |
+          curl -sSfL -o /tmp/godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          mv "/tmp/godot/Godot_v${GODOT_VERSION}_linux.x86_64" /tmp/godot/godot
+      - name: Import project
+        run: timeout 300 /tmp/godot/godot --headless --path . --import
+      - name: Render screenshots
+        run: |
+          mkdir -p screenshots
+          SCREENSHOT_DIR="$PWD/screenshots" timeout 300 xvfb-run -a -s "-screen 0 1280x1024x24" \
+            /tmp/godot/godot --path . --rendering-driver opengl3 --resolution 720x1600 res://tools/screenshots.tscn
+          ls -la screenshots
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/*.png
+          retention-days: 7
+      # Keeps the latest screenshots on a separate branch (one commit, replaced each time)
+      # so they can be viewed on GitHub or fetched with git.
+      - name: Publish screenshots to the ci-screenshots branch
+        if: github.event_name == 'push'
+        run: |
+          cd screenshots
+          git init -q -b ci-screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          printf '# Screenshots\n\nRendered from %s at %s.\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" > README.md
+          git add -A
+          git commit -q -m "Screenshots for ${GITHUB_REF_NAME} ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" ci-screenshots

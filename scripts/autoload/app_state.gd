@@ -9,6 +9,8 @@ var guest_name: String = ""
 var pending_mode_id: String = ClassicMode.ID
 ## Match being set up or played.
 var match_config: MatchConfig = null
+## Seats in finishing order for the last finished match (result screen).
+var last_ranking: Array[int] = []
 
 
 func _ready() -> void:

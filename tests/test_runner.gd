@@ -11,6 +11,7 @@ const TEST_DIR := "res://tests/unit"
 func _ready() -> void:
 	# Let autoloads finish their _ready first.
 	await get_tree().process_frame
+	SceneRouter.navigation_enabled = false
 	var exit_code: int = await _run_all()
 	get_tree().quit(exit_code)
 

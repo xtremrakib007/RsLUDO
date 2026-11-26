@@ -1,0 +1,288 @@
+class_name MatchScreen
+extends BaseScreen
+## Shared parts of an offline match screen: header, player panels, dice panel,
+## message banner and the pause menu. Ludo and Snakes & Ladders extend this and
+## add their own board and turn flow. Offline matches can be paused.
+
+const DICE_ROLL_TIME := 0.6
+
+var _config: MatchConfig
+var _mode: GameMode
+var _busy := false
+var _dice: DiceFace
+var _dice_button: Button
+var _dice_pulse: Tween
+var _turn_label: Label
+var _hint_label: Label
+var _panels: Dictionary = {}
+var _status_labels: Dictionary = {}
+var _banner: PanelContainer
+var _banner_label: Label
+var _pause_layer: Control
+var _pause_panel: Control
+
+
+## Loads the match settings (or a default) and adds the header. Call first in build().
+func _setup_match(default_mode_id: String) -> void:
+	_config = AppState.match_config
+	if _config == null or ModeRegistry.get_mode(_config.mode_id) == null:
+		_config = MatchConfig.create(default_mode_id, 4)
+		AppState.match_config = _config
+	_mode = ModeRegistry.get_mode(_config.mode_id)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 20)
+	var pause := IconButton.new(IconButton.Icon.PAUSE)
+	pause.pressed.connect(_toggle_pause)
+	header.add_child(pause)
+	var titles := VBoxContainer.new()
+	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	titles.add_child(UIKit.title(_mode.title, 38))
+	titles.add_child(UIKit.label(_subtitle(), 22, Palette.TEXT_MUTED))
+	header.add_child(titles)
+	content.add_child(header)
+
+
+## Adds the overlay layers. Call last in build().
+func _finish_setup() -> void:
+	_build_banner()
+	_build_pause_menu()
+
+
+func _subtitle() -> String:
+	return "%d players - pass and play" % _config.player_count()
+
+
+# --- Player panels ------------------------------------------------------
+
+func _corner_row(left_seat: int, right_seat: int) -> Control:
+	var row := HBoxContainer.new()
+	row.add_child(_player_panel(left_seat))
+	row.add_child(UIKit.spacer(false))
+	row.add_child(_player_panel(right_seat))
+	return row
+
+
+func _player_panel(seat: int) -> Control:
+	var player := _config.player_at_seat(seat)
+	if player == null:
+		var empty := Control.new()
+		empty.custom_minimum_size = Vector2(0, 76)
+		return empty
+	var panel := PanelContainer.new()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	row.add_child(UIKit.color_dot(player.color(), 40))
+	var texts := VBoxContainer.new()
+	texts.add_theme_constant_override("separation", 0)
+	var name_label := UIKit.title(player.display_name, 26)
+	name_label.custom_minimum_size = Vector2(180, 0)
+	name_label.clip_text = true
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	texts.add_child(name_label)
+	var status := UIKit.label("", 20, Palette.TEXT_MUTED)
+	texts.add_child(status)
+	row.add_child(texts)
+	panel.add_child(row)
+	_panels[seat] = panel
+	_status_labels[seat] = status
+	return panel
+
+
+## Highlights the current player and updates each panel's status line.
+func _refresh_panels(current_seat: int, game_over: bool) -> void:
+	var player := _config.player_at_seat(current_seat)
+	_turn_label.text = "%s's turn" % player.display_name
+	_turn_label.add_theme_color_override("font_color", player.color().lightened(0.25))
+	_dice.pip_color = player.color().darkened(0.15)
+	_dice.queue_redraw()
+	for seat in _panels:
+		var panel: PanelContainer = _panels[seat]
+		var color := Palette.seat_color(seat)
+		if seat == current_seat and not game_over:
+			panel.add_theme_stylebox_override("panel", UIKit.flat_style(Color(color, 0.28), 22, color, 4, 12))
+		else:
+			panel.add_theme_stylebox_override("panel", UIKit.flat_style(Palette.PANEL, 22, Palette.PANEL_BORDER, 2, 12))
+		(_status_labels[seat] as Label).text = _panel_status(seat)
+
+
+## Second line of a player panel. Override per game.
+func _panel_status(_seat: int) -> String:
+	return ""
+
+
+func _name(seat: int) -> String:
+	var player := _config.player_at_seat(seat)
+	return player.display_name if player != null else Palette.seat_name(seat)
+
+
+# --- Dice ---------------------------------------------------------------
+
+func _dice_panel() -> Control:
+	var panel := UIKit.card(Palette.PANEL, 28, 16)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	var texts := VBoxContainer.new()
+	texts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	texts.alignment = BoxContainer.ALIGNMENT_CENTER
+	_turn_label = UIKit.title("", 34)
+	_turn_label.clip_text = true
+	_turn_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	texts.add_child(_turn_label)
+	_hint_label = UIKit.label("", 24, Palette.TEXT_MUTED, HORIZONTAL_ALIGNMENT_LEFT, true)
+	texts.add_child(_hint_label)
+	row.add_child(texts)
+
+	_dice_button = Button.new()
+	_dice_button.custom_minimum_size = Vector2(124, 124)
+	_dice_button.focus_mode = Control.FOCUS_NONE
+	UIKit.style_button(_dice_button, Color(0, 0, 0, 0), Palette.TEXT, 0, 24)
+	_dice = DiceFace.new()
+	_dice.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_dice_button.add_child(_dice)
+	UIKit.ignore_mouse_recursive(_dice_button)
+	UIKit.add_press_feedback(_dice_button)
+	_dice_button.pressed.connect(_on_dice_pressed)
+	row.add_child(_dice_button)
+	panel.add_child(row)
+	return panel
+
+
+## Override: what happens when the dice is tapped.
+func _on_dice_pressed() -> void:
+	pass
+
+
+func _animate_dice(value: int) -> void:
+	var tween := create_tween()
+	tween.tween_method(_spin_dice, 0.0, 1.0, DICE_ROLL_TIME).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	await tween.finished
+	_dice.rotation = 0.0
+	_dice.value = value
+	var pop := create_tween()
+	pop.tween_property(_dice, "scale", Vector2(1.15, 1.15), 0.08)
+	pop.tween_property(_dice, "scale", Vector2.ONE, 0.12)
+	await pop.finished
+
+
+func _spin_dice(t: float) -> void:
+	_dice.rotation = t * TAU * 2.0
+	if int(t * 30.0) % 2 == 0:
+		_dice.value = randi_range(1, 6)
+
+
+func _start_dice_pulse() -> void:
+	_stop_dice_pulse()
+	_dice_pulse = create_tween().set_loops()
+	_dice_pulse.tween_property(_dice, "scale", Vector2(1.08, 1.08), 0.45).set_trans(Tween.TRANS_SINE)
+	_dice_pulse.tween_property(_dice, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_SINE)
+
+
+func _stop_dice_pulse() -> void:
+	if _dice_pulse != null and _dice_pulse.is_valid():
+		_dice_pulse.kill()
+	_dice.scale = Vector2.ONE
+
+
+# --- Messages and timing ------------------------------------------------
+
+func _build_banner() -> void:
+	_banner = PanelContainer.new()
+	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_banner.anchor_left = 0.1
+	_banner.anchor_right = 0.9
+	_banner.anchor_top = 0.45
+	_banner.anchor_bottom = 0.45
+	_banner.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_banner_label = UIKit.title("", 38, Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	_banner_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_banner.add_child(_banner_label)
+	_banner.modulate.a = 0.0
+	add_child(_banner)
+
+
+func _show_banner(text: String, color: Color) -> void:
+	_banner_label.text = text
+	_banner.add_theme_stylebox_override("panel", UIKit.flat_style(Color(0.04, 0.05, 0.13, 0.92), 26, color, 4, 22))
+	_banner.pivot_offset = _banner.size * 0.5
+	_banner.scale = Vector2(0.85, 0.85)
+	var tween := _banner.create_tween()
+	tween.tween_property(_banner, "modulate:a", 1.0, 0.12)
+	tween.parallel().tween_property(_banner, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_interval(0.9)
+	tween.tween_property(_banner, "modulate:a", 0.0, 0.25)
+
+
+## Waits using a tween owned by this screen, so nothing resumes after the screen closes.
+func _wait(seconds: float) -> void:
+	var tween := create_tween()
+	tween.tween_interval(seconds)
+	await tween.finished
+
+
+func _finish_match(ranking: Array[int]) -> void:
+	AppState.last_ranking = ranking
+	await _wait(1.2)
+	SceneRouter.goto("result")
+
+
+# --- Pause (offline only) -------------------------------------------------
+
+## Node whose animations freeze while paused (the board).
+func _pausable() -> Node:
+	return null
+
+
+func _build_pause_menu() -> void:
+	_pause_layer = Control.new()
+	_pause_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_pause_layer.visible = false
+	add_child(_pause_layer)
+
+	var dim := ColorRect.new()
+	dim.color = Palette.OVERLAY
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_pause_layer.add_child(dim)
+
+	var centre := CenterContainer.new()
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_pause_layer.add_child(centre)
+	var panel := UIKit.card(Palette.BG_TOP, 32, 32)
+	panel.custom_minimum_size = Vector2(540, 0)
+	centre.add_child(panel)
+	_pause_panel = panel
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	panel.add_child(box)
+	box.add_child(UIKit.title("Paused", 54, Palette.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
+	var resume := UIKit.button("Resume")
+	resume.pressed.connect(_toggle_pause)
+	box.add_child(resume)
+	var restart := UIKit.button("Restart Match", UIKit.ButtonKind.SECONDARY)
+	restart.pressed.connect(SceneRouter.goto.bind(_mode.game_screen))
+	box.add_child(restart)
+	var quit := UIKit.button("Quit to Home", UIKit.ButtonKind.GHOST)
+	quit.pressed.connect(SceneRouter.goto.bind("home"))
+	box.add_child(quit)
+
+
+func is_paused() -> bool:
+	return _pause_layer.visible
+
+
+func _toggle_pause() -> void:
+	_pause_layer.visible = not _pause_layer.visible
+	var frozen := _pausable()
+	if frozen != null:
+		frozen.process_mode = Node.PROCESS_MODE_DISABLED if _pause_layer.visible else Node.PROCESS_MODE_INHERIT
+	if _pause_layer.visible:
+		_pause_panel.pivot_offset = _pause_panel.size * 0.5
+		_pause_panel.scale = Vector2(0.9, 0.9)
+		var tween := create_tween()
+		tween.tween_property(_pause_panel, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func handle_back() -> void:
+	_toggle_pause()

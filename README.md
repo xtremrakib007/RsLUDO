@@ -1,12 +1,12 @@
-# Ludo Social
+# RS Ludo
 
 A family-friendly Ludo game for Android, built with **Godot 4** and **GDScript**. All tools and libraries are free and open source.
 
 - **Classic Ludo**: 2 or 4 players, traditional rules (configurable).
-- **Snake Ludo**: the same engine plus cartoon snakes that bite only when a pawn stops exactly on a snake's mouth.
+- **Snakes & Ladders**: the traditional 1-100 race, one character per player, with five boards to choose from.
 - Offline pass-and-play first. Online play is planned (see `docs/ONLINE_ARCHITECTURE.md`) but not built.
 
-Current status: **Phase 1 (Foundation)**. See `docs/DEVELOPMENT_PLAN.md`.
+Current status: **Phase 2 (playable Classic Ludo and Snakes & Ladders, pass and play)**. See `docs/DEVELOPMENT_PLAN.md`.
 
 ## Open the project
 
@@ -27,9 +27,17 @@ The runner prints `PASS`/`FAIL` per test and exits with code 1 if anything fails
 
 The tests do not need any add-on; the runner is `tests/test_runner.gd`. Add a suite by creating `tests/unit/test_<name>.gd` that extends `res://tests/test_case.gd` and has `test_*` methods.
 
-## Android build (Phase 5)
+## Google Play (automatic updates)
 
-Not set up yet. Needed later, all free: Android SDK command-line tools, OpenJDK 17, Godot export templates 4.4.1. Signing keystores and passwords must **never** be committed; `.gitignore` already excludes `*.keystore`, `*.jks` and `export_credentials.cfg`.
+See `docs/PLAY_STORE_SETUP.md`: every change merged into `main` is uploaded to Google Play internal testing, and testers' phones update automatically.
+
+## Android test APK
+
+Every push builds a debug APK (`.github/workflows/android.yml`). Open the run under **Actions**, download `RsLUDO-debug-apk`, unzip and install it on the phone. Debug builds use a throwaway key; signing keys and passwords must **never** be committed (`.gitignore` excludes `*.keystore`, `*.jks` and `export_credentials.cfg`). A signed release build is part of Phase 5.
+
+## Screenshots
+
+The `Screenshots for review` CI job renders the main screens with `tools/screenshots.tscn` and puts them on the `ci-screenshots` branch.
 
 ## Folder layout
 
