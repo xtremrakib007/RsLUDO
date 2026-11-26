@@ -33,16 +33,21 @@ static func prop_for(style: int) -> int:
 
 
 static func play(host: Node, attacker: PawnToken, victim: PawnToken, style: int, cell: float) -> void:
-	# 1. Step apart and face each other.
+	# 1. Step apart, grow so the fight is easy to see, and face each other.
 	var centre := victim.position
-	var gap := Vector2(cell * 0.55, 0)
+	var gap := Vector2(cell * 0.85, 0)
+	var big := cell * 0.8
+	attacker.z_index = 5
+	victim.z_index = 5
 	var tween := host.create_tween().set_parallel()
-	tween.tween_property(attacker, "position", centre - gap, 0.18).set_trans(Tween.TRANS_SINE)
-	tween.tween_property(victim, "position", centre + gap, 0.18).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(attacker, "position", centre - gap, 0.22).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(victim, "position", centre + gap, 0.22).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(attacker, "radius", big, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(victim, "radius", big, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await tween.finished
 	attacker.facing = 1.0
 	victim.facing = -1.0
-	var target := victim.position + Vector2(0, -cell * 0.35)
+	var target := victim.position + Vector2(0, -big * 0.55)
 
 	# 2. Arm up, prop pops into the hand.
 	attacker.prop = prop_for(style)
@@ -57,14 +62,14 @@ static func play(host: Node, attacker: PawnToken, victim: PawnToken, style: int,
 	match style:
 		Style.BLASTER:
 			await _effect(host, CaptureEffect.Kind.BEAM, attacker.hand_position(), target, Color.from_hsv(randf(), 0.6, 1.0), cell, "", 0.45)
-			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("7df9ff"), cell * 1.2, "ZAP!", 0.7)
+			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("7df9ff"), cell * 1.8, "ZAP!", 0.7)
 		Style.SWORD:
 			tween = host.create_tween().set_parallel()
 			tween.tween_property(attacker, "position", centre - gap * 0.2, 0.1)
 			tween.tween_property(attacker, "prop_angle", 1.1, 0.16).from(-1.3)
 			await tween.finished
-			_effect(host, CaptureEffect.Kind.SLASH, target, target, Color("bfe9ff"), cell * 0.75, "", 0.4)
-			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("ffe066"), cell * 1.1, "SWISH!", 0.7)
+			_effect(host, CaptureEffect.Kind.SLASH, target, target, Color("bfe9ff"), cell * 1.1, "", 0.4)
+			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("ffe066"), cell * 1.8, "SWISH!", 0.7)
 			tween = host.create_tween()
 			tween.tween_property(attacker, "position", centre - gap, 0.14)
 			await tween.finished
@@ -74,14 +79,14 @@ static func play(host: Node, attacker: PawnToken, victim: PawnToken, style: int,
 			tween.tween_property(attacker, "prop_angle", 0.9, 0.09).from(-1.7)
 			await tween.finished
 			victim.squash = Vector2(1.45, 0.45)
-			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("ff9f43"), cell * 1.2, "BONK!", 0.7)
+			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("ff9f43"), cell * 1.8, "BONK!", 0.7)
 		_:
 			tween = host.create_tween()
 			tween.tween_property(attacker, "prop_angle", 0.5, 0.25).from(-0.5).set_trans(Tween.TRANS_SINE)
 			await tween.finished
 			await _effect(host, CaptureEffect.Kind.SPARKLES, attacker.hand_position(), target, Color.WHITE, cell, "", 0.4)
 			_effect(host, CaptureEffect.Kind.POOF, target, target, Color.WHITE, cell, "", 0.6)
-			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("d9a7ff"), cell * 1.1, "POOF!", 0.7)
+			_effect(host, CaptureEffect.Kind.BURST, target, target, Color("d9a7ff"), cell * 1.8, "POOF!", 0.7)
 
 	# 4. Hit reaction: squash, shake and dizzy stars.
 	victim.dizzy = true
@@ -102,6 +107,7 @@ static func play(host: Node, attacker: PawnToken, victim: PawnToken, style: int,
 	reset_pose(attacker)
 	victim.dizzy = false
 	victim.squash = Vector2.ONE
+	victim.z_index = 0
 
 
 ## A happy double jump with confetti.
@@ -117,6 +123,7 @@ static func celebrate(host: Node, pawn: PawnToken, cell: float) -> void:
 	tween.tween_property(pawn, "arm_raise", 0.0, 0.12)
 	await tween.finished
 	pawn.lift = 0.0
+	pawn.z_index = 0
 
 
 ## Clears every capture-only pose, so nothing is left in the pawn's hand.
