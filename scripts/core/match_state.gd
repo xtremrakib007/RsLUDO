@@ -17,8 +17,6 @@ var last_roll: int = 0
 var consecutive_sixes: int = 0
 ## Seats in the order they brought all four pawns home.
 var finish_order: Array[int] = []
-## seat -> number of turns still to miss (Snake Ludo penalty).
-var skip_turns: Dictionary = {}
 
 
 static func create(p_seats: Array[int]) -> MatchState:
@@ -29,7 +27,6 @@ static func create(p_seats: Array[int]) -> MatchState:
 		for i in BoardLayout.PAWNS_PER_PLAYER:
 			pawns.append(IN_BASE)
 		state.progress[seat] = pawns
-		state.skip_turns[seat] = 0
 	return state
 
 

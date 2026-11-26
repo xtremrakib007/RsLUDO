@@ -1,7 +1,7 @@
 class_name SnakeArt
 extends RefCounted
 ## Draws a friendly cartoon snake along a list of points (tail first, head last).
-## Placeholder art drawn in code; Phase 4 adds animated sprites and the bite.
+## Placeholder art drawn in code; it can be replaced by sprites later.
 
 
 static func draw_snake(canvas: CanvasItem, anchors: Array[Vector2], cell: float, color: Color) -> void:
@@ -47,6 +47,11 @@ static func draw_snake(canvas: CanvasItem, anchors: Array[Vector2], cell: float,
 	canvas.draw_line(tip, tip + Vector2(head_r * 0.25, -head_r * 0.2), tongue_color, width, true)
 	canvas.draw_line(tip, tip + Vector2(head_r * 0.25, head_r * 0.2), tongue_color, width, true)
 	canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## The snake's body line (tail to head), used to slide pawns down a snake.
+static func body_path(anchors: Array[Vector2], cell: float) -> PackedVector2Array:
+	return _wiggle(_smooth(anchors), cell)
 
 
 static func _radius(k: int, count: int, cell: float) -> float:

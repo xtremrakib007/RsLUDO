@@ -10,11 +10,11 @@ enum Type {
 	THREE_SIXES,      # {seat}
 	PAWN_MOVED,       # {seat, pawn, from, to}
 	PAWN_CAPTURED,    # {seat, pawn, victim_seat, victim_pawn, track_index}
-	SNAKE_BITE,       # {seat, pawn, track_index, from, to, penalty}
+	SNAKE_SLIDE,      # Snakes & Ladders: {seat, from, to}
+	LADDER_CLIMB,     # Snakes & Ladders: {seat, from, to}
 	PAWN_FINISHED,    # {seat, pawn}
 	PLAYER_FINISHED,  # {seat, place}
 	EXTRA_TURN,       # {seat}
-	TURN_SKIPPED,     # {seat}
 	TURN_PASSED,      # {from, to}
 	GAME_OVER,        # {winner, ranking}
 }

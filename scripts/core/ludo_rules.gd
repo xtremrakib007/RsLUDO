@@ -1,7 +1,7 @@
 class_name LudoRules
 extends RefCounted
 ## The Ludo rules as pure functions over MatchState. No nodes, drawing or timing.
-## Every rule option comes from LudoRulesConfig. Snake Ludo passes a SnakeLayout.
+## Every rule option comes from LudoRulesConfig.
 
 
 ## Where a pawn at `from` would go with `roll`, or -2 if it cannot move.
@@ -60,7 +60,7 @@ static func apply_roll(state: MatchState, rules: LudoRulesConfig, roll: int) -> 
 
 
 ## Moves a pawn. Only a move from legal_moves() is accepted.
-static func apply_move(state: MatchState, rules: LudoRulesConfig, move: LudoMove, snakes: SnakeLayout = null) -> Array[GameEvent]:
+static func apply_move(state: MatchState, rules: LudoRulesConfig, move: LudoMove) -> Array[GameEvent]:
 	var events: Array[GameEvent] = []
 	if state.phase != MatchState.Phase.AWAITING_MOVE:
 		push_warning("Move ignored: not waiting for a move.")
@@ -79,14 +79,9 @@ static func apply_move(state: MatchState, rules: LudoRulesConfig, move: LudoMove
 	events.append(GameEvent.new(GameEvent.Type.PAWN_MOVED, {"seat": seat, "pawn": pawn, "from": chosen.from, "to": chosen.to}))
 
 	var extra_turn := state.last_roll == 6 and rules.extra_turn_on_six
-	var bitten := false
 	var track_index := BoardLayout.progress_to_track_index(seat, chosen.to)
-	if track_index >= 0:
-		if rules.snakes_enabled and snakes != null and snakes.is_mouth(track_index):
-			bitten = true
-			_apply_snake_bite(state, rules, seat, pawn, track_index, events)
-		elif _capture(state, rules, seat, pawn, track_index, events) and rules.extra_turn_on_capture:
-			extra_turn = true
+	if track_index >= 0 and _capture(state, rules, seat, pawn, track_index, events) and rules.extra_turn_on_capture:
+		extra_turn = true
 
 	if chosen.to == BoardLayout.FINISH_PROGRESS:
 		events.append(GameEvent.new(GameEvent.Type.PAWN_FINISHED, {"seat": seat, "pawn": pawn}))
@@ -101,8 +96,6 @@ static func apply_move(state: MatchState, rules: LudoRulesConfig, move: LudoMove
 				return events
 			extra_turn = false
 
-	if bitten:
-		extra_turn = false
 	if extra_turn:
 		state.phase = MatchState.Phase.AWAITING_ROLL
 		events.append(GameEvent.new(GameEvent.Type.EXTRA_TURN, {"seat": seat}))
@@ -145,22 +138,6 @@ static func _capture(state: MatchState, rules: LudoRulesConfig, seat: int, pawn:
 	return captured
 
 
-static func _apply_snake_bite(state: MatchState, rules: LudoRulesConfig, seat: int, pawn: int, track_index: int, events: Array[GameEvent]) -> void:
-	var from := state.pawn_progress(seat, pawn)
-	var to := from
-	match rules.snake_penalty:
-		LudoRulesConfig.SnakePenalty.RETURN_TO_BASE:
-			to = MatchState.IN_BASE
-		LudoRulesConfig.SnakePenalty.MOVE_BACK_STEPS:
-			to = maxi(0, from - rules.snake_penalty_steps)
-		LudoRulesConfig.SnakePenalty.SKIP_NEXT_TURN:
-			state.skip_turns[seat] = int(state.skip_turns.get(seat, 0)) + 1
-	state.set_pawn_progress(seat, pawn, to)
-	events.append(GameEvent.new(GameEvent.Type.SNAKE_BITE, {
-		"seat": seat, "pawn": pawn, "track_index": track_index, "from": from, "to": to, "penalty": rules.snake_penalty,
-	}))
-
-
 ## True if an opponent block (2+ pawns of one colour) stands on a square the pawn would step on.
 static func _path_blocked(state: MatchState, seat: int, from: int, to: int) -> bool:
 	var first := 0 if from == MatchState.IN_BASE else from + 1
@@ -184,12 +161,6 @@ static func _end_turn(state: MatchState, events: Array[GameEvent]) -> void:
 	for i in count:
 		state.turn_index = (state.turn_index + 1) % count
 		var seat := state.current_seat()
-		if state.finish_order.has(seat):
-			continue
-		var skips := int(state.skip_turns.get(seat, 0))
-		if skips > 0:
-			state.skip_turns[seat] = skips - 1
-			events.append(GameEvent.new(GameEvent.Type.TURN_SKIPPED, {"seat": seat}))
-			continue
-		break
+		if not state.finish_order.has(seat):
+			break
 	events.append(GameEvent.new(GameEvent.Type.TURN_PASSED, {"from": from_seat, "to": state.current_seat()}))

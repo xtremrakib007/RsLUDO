@@ -17,11 +17,15 @@ func _ready() -> void:
 	AppState.guest_name = "Guest 0427"
 
 	await _shot("home", out_dir, func() -> void: pass)
-	AppState.pending_mode_id = SnakeMode.ID
+	AppState.pending_mode_id = SnakesLaddersMode.ID
 	await _shot("player_select", out_dir, func() -> void: pass)
-	AppState.match_config = MatchConfig.create(SnakeMode.ID, 4)
+	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, 4)
+	await _shot("board_select", out_dir, func() -> void: pass)
+	AppState.match_config.board_id = "classic"
 	await _shot("lobby", out_dir, func() -> void: pass)
-	await _shot("game", out_dir, _setup_midgame, "game_snake_4p")
+	await _shot("snl_game", out_dir, _setup_snl, "snl_game_4p")
+	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
+	await _shot("game", out_dir, _setup_midgame, "game_classic_4p")
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 2)
 	await _shot("game", out_dir, _setup_choice, "game_classic_2p_choice")
 	AppState.last_ranking = [2, 0] as Array[int]
@@ -61,6 +65,18 @@ func _setup_midgame() -> void:
 	m.state.set_pawn_progress(3, 1, 22)
 	var board: BoardView = _current.get("board")
 	board.sync(m.state)
+
+
+## Snakes & Ladders pawns spread over the board, two sharing a square.
+func _setup_snl() -> void:
+	var m: SnlMatch = _current.get("snl_match")
+	m.state.set_position(0, 23)
+	m.state.set_position(1, 23)
+	m.state.set_position(2, 58)
+	var board: SnlBoardView = _current.get("board")
+	board.sync(m.state)
+	board.queue_redraw()
+	_current.call("_refresh_ui")
 
 
 ## Two pawns that can move: shows the glowing choice.

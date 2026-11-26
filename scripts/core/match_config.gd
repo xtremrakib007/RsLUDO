@@ -7,7 +7,11 @@ const SUPPORTED_PLAYER_COUNTS := [2, 4]
 
 var mode_id: String = ""
 var players: Array[LudoPlayer] = []
+## Ludo rules (Classic Ludo).
 var rules: LudoRulesConfig
+## Snakes & Ladders rules and the chosen board.
+var snl_rules: SnlRules = SnlRules.new()
+var board_id: String = ""
 
 
 ## Seats used for a player count. Two players sit opposite each other.
@@ -29,6 +33,7 @@ static func create(p_mode_id: String, count: int) -> MatchConfig:
 	var config := MatchConfig.new()
 	config.mode_id = p_mode_id
 	config.rules = mode.default_rules()
+	config.board_id = SnlBoards.all()[0].id
 	for seat in seats_for_count(count):
 		config.players.append(LudoPlayer.new(seat, "%s Player" % Palette.seat_name(seat)))
 	return config

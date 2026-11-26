@@ -32,7 +32,7 @@ func test_every_screen_builds() -> void:
 
 func test_game_board_places_pawns_for_each_player() -> void:
 	for count in [2, 4]:
-		AppState.match_config = MatchConfig.create(SnakeMode.ID, count)
+		AppState.match_config = MatchConfig.create(ClassicMode.ID, count)
 		var game_scene: PackedScene = load(SceneRouterScript.SCREENS["game"])
 		var screen := game_scene.instantiate()
 		tree.root.add_child(screen)
@@ -127,16 +127,67 @@ func test_winning_shows_the_result_screen() -> void:
 	await tree.process_frame
 
 
-func test_snake_mode_draws_snakes_and_classic_does_not() -> void:
-	var snake_screen: Node = await _open_game(SnakeMode.ID, 4)
-	var snake_board: BoardView = snake_screen.get("board")
-	assert_not_null(snake_board.snakes, "snake board has snakes")
-	assert_eq(snake_board.snakes.snake_count(), 4)
-	snake_screen.queue_free()
-	var classic_screen: Node = await _open_game(ClassicMode.ID, 4)
-	var classic_board: BoardView = classic_screen.get("board")
-	assert_true(classic_board.snakes == null, "classic board has no snakes")
-	classic_screen.queue_free()
+func _open_snl(count: int, board_id: String) -> Node:
+	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, count)
+	AppState.match_config.board_id = board_id
+	var scene: PackedScene = load(SceneRouterScript.SCREENS["snl_game"])
+	var screen := scene.instantiate()
+	tree.root.add_child(screen)
+	await tree.process_frame
+	return screen
+
+
+func test_snakes_and_ladders_screen_plays_a_ladder() -> void:
+	var screen: Node = await _open_snl(2, "easy")
+	var snl_match: SnlMatch = screen.get("snl_match")
+	var board: SnlBoardView = screen.get("board")
+	assert_eq(snl_match.board.id, "easy", "chosen board is used")
+	assert_eq(board.pawn_count(), 2, "one pawn per player")
+	snl_match.dice.queue_rolls([3] as Array[int])
+	screen.call("_on_dice_pressed")
+	await _wait_seconds(3.5)
+	assert_eq(snl_match.state.position_of(0), 22, "rolled 3 onto the ladder 3 -> 22")
+	assert_eq(snl_match.state.current_seat(), 2, "turn passed")
+	var pawn_position := board.pawn_node(0).position
+	assert_true(pawn_position.distance_to(board.square_center(22)) < board.cell_size(), "pawn drawn on 22")
+	screen.queue_free()
+	await tree.process_frame
+
+
+func test_snakes_and_ladders_win_opens_results() -> void:
+	var screen: Node = await _open_snl(4, "classic")
+	var snl_match: SnlMatch = screen.get("snl_match")
+	snl_match.state.set_position(0, 97)
+	(screen.get("board") as SnlBoardView).sync(snl_match.state)
+	snl_match.dice.queue_rolls([3] as Array[int])
+	SceneRouter.last_requested = ""
+	screen.call("_on_dice_pressed")
+	await _wait_seconds(5.0)
+	assert_eq(snl_match.state.phase, SnlState.Phase.GAME_OVER)
+	assert_eq(AppState.last_ranking[0], 0, "red wins")
+	assert_eq(SceneRouter.last_requested, "result")
+	screen.queue_free()
+	await tree.process_frame
+
+
+func test_board_chooser_flips_and_selects() -> void:
+	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, 2)
+	var scene: PackedScene = load(SceneRouterScript.SCREENS["board_select"])
+	var screen := scene.instantiate()
+	tree.root.add_child(screen)
+	await tree.process_frame
+	var first: SnlBoard = screen.call("current_board")
+	screen.call("_step", 1)
+	var second: SnlBoard = screen.call("current_board")
+	assert_true(first.id != second.id, "right arrow shows the next board")
+	screen.call("_step", -2)
+	var last: SnlBoard = screen.call("current_board")
+	assert_eq(last.id, SnlBoards.all()[4].id, "left from the first board wraps to the last")
+	SceneRouter.last_requested = ""
+	screen.call("_select")
+	assert_eq(AppState.match_config.board_id, last.id, "selected board saved")
+	assert_eq(SceneRouter.last_requested, "lobby")
+	screen.queue_free()
 	await tree.process_frame
 
 

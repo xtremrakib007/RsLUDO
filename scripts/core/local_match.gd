@@ -6,7 +6,6 @@ extends RefCounted
 var config: MatchConfig
 var rules: LudoRulesConfig
 var dice: Dice
-var snakes: SnakeLayout = null
 var state: MatchState
 
 
@@ -14,9 +13,6 @@ func _init(p_config: MatchConfig, p_dice: Dice = null) -> void:
 	config = p_config
 	rules = config.rules
 	dice = p_dice if p_dice != null else Dice.new()
-	var mode := ModeRegistry.get_mode(config.mode_id)
-	if rules.snakes_enabled and mode != null:
-		snakes = mode.snake_layout()
 	restart()
 
 
@@ -36,7 +32,7 @@ func legal_moves() -> Array[LudoMove]:
 
 
 func move(chosen: LudoMove) -> Array[GameEvent]:
-	return LudoRules.apply_move(state, rules, chosen, snakes)
+	return LudoRules.apply_move(state, rules, chosen)
 
 
 func ranking() -> Array[int]:

@@ -11,7 +11,6 @@ const HOP_TIME := 0.15
 const RETURN_TIME := 0.45
 
 var active_seats: Array[int] = [0, 1, 2, 3]
-var snakes: SnakeLayout = null
 ## Vector2i(seat, pawn) -> PawnToken
 var _pawns: Dictionary = {}
 var _state: MatchState = null
@@ -24,10 +23,9 @@ func _ready() -> void:
 	_rebuild_pawns()
 
 
-## Choose which seats are playing (unused bases are faded) and the snakes to draw.
-func setup(seats: Array[int], p_snakes: SnakeLayout = null) -> void:
+## Choose which seats are playing. Unused bases are drawn faded and stay empty.
+func setup(seats: Array[int]) -> void:
 	active_seats = seats.duplicate()
-	snakes = p_snakes
 	if is_inside_tree():
 		_rebuild_pawns()
 	queue_redraw()
@@ -106,7 +104,7 @@ func animate_move(seat: int, pawn: int, from: int, to: int) -> void:
 	node.set_hop(0.0)
 
 
-## Sends a pawn back to its base slot (after a capture or a snake bite).
+## Sends a pawn back to its base slot after a capture.
 func animate_to_base(seat: int, pawn: int) -> void:
 	var node := pawn_node(seat, pawn)
 	if node == null:
@@ -216,7 +214,6 @@ func _draw() -> void:
 	_draw_track(cs)
 	_draw_home_columns(cs)
 	_draw_centre(cs)
-	_draw_snakes(cs)
 
 
 func _draw_base(seat: int, cs: float) -> void:
@@ -240,8 +237,6 @@ func _draw_track(cs: float) -> void:
 		var fill := Color.WHITE
 		if owner_seat >= 0:
 			fill = _seat_color(owner_seat)
-		elif snakes != null and snakes.is_mouth(i):
-			fill = Color(Palette.snake_color(snakes.mouths.find(i)), 0.35)
 		draw_rect(rect, fill)
 		draw_rect(rect, Palette.BOARD_LINE, false, maxf(1.0, cs * 0.04))
 		if BoardLayout.is_safe_index(i):
@@ -272,17 +267,6 @@ func _draw_centre(cs: float) -> void:
 		draw_colored_polygon(points, _seat_color(seat))
 		points.append(points[0])
 		draw_polyline(points, Color(1, 1, 1, 0.7), maxf(1.0, cs * 0.05), true)
-
-
-func _draw_snakes(cs: float) -> void:
-	if snakes == null:
-		return
-	for i in snakes.snake_count():
-		var anchors: Array[Vector2] = []
-		for index in snakes.bodies[i]:
-			anchors.append(cell_rect(BoardLayout.track_cell(index)).get_center())
-		anchors.append(cell_rect(BoardLayout.track_cell(snakes.mouths[i])).get_center())
-		SnakeArt.draw_snake(self, anchors, cs, snakes.colors[i])
 
 
 func _draw_star(centre: Vector2, outer_radius: float, color: Color) -> void:

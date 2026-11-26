@@ -3,7 +3,7 @@ extends "res://tests/test_case.gd"
 
 func test_modes_are_registered() -> void:
 	assert_not_null(ModeRegistry.get_mode(ClassicMode.ID), "classic mode")
-	assert_not_null(ModeRegistry.get_mode(SnakeMode.ID), "snake mode")
+	assert_not_null(ModeRegistry.get_mode(SnakesLaddersMode.ID), "snakes and ladders mode")
 	assert_true(ModeRegistry.get_mode("unknown") == null, "unknown mode")
 	assert_eq(ModeRegistry.all_modes().size(), 2, "mode count")
 	for mode in ModeRegistry.all_modes():
@@ -22,7 +22,7 @@ func test_two_players_sit_opposite() -> void:
 
 
 func test_four_players_use_every_seat() -> void:
-	var config := MatchConfig.create(SnakeMode.ID, 4)
+	var config := MatchConfig.create(SnakesLaddersMode.ID, 4)
 	assert_not_null(config, "4-player config")
 	assert_eq(config.seats(), [0, 1, 2, 3] as Array[int], "seats")
 	for player in config.players:
@@ -35,12 +35,13 @@ func test_unsupported_setups_are_rejected() -> void:
 	assert_true(MatchConfig.create("unknown", 2) == null, "unknown mode")
 
 
-func test_modes_get_their_own_rules() -> void:
-	var classic := MatchConfig.create(ClassicMode.ID, 4)
-	var snake := MatchConfig.create(SnakeMode.ID, 4)
-	assert_false(classic.rules.snakes_enabled, "classic has no snakes")
-	assert_true(snake.rules.snakes_enabled, "snake mode has snakes")
-	assert_eq(snake.rules.snake_penalty, LudoRulesConfig.SnakePenalty.RETURN_TO_BASE, "default snake penalty")
+func test_modes_open_their_own_screens() -> void:
+	assert_eq(ModeRegistry.get_mode(ClassicMode.ID).game_screen, "game")
+	assert_eq(ModeRegistry.get_mode(SnakesLaddersMode.ID).game_screen, "snl_game")
+	assert_true(ModeRegistry.get_mode(SnakesLaddersMode.ID).has_board_choice, "snakes and ladders has boards to choose")
+	assert_false(ModeRegistry.get_mode(ClassicMode.ID).has_board_choice)
+	var config := MatchConfig.create(SnakesLaddersMode.ID, 2)
+	assert_eq(config.board_id, SnlBoards.all()[0].id, "first board chosen by default")
 
 
 func test_default_rules_are_traditional() -> void:
@@ -56,11 +57,10 @@ func test_default_rules_are_traditional() -> void:
 
 
 func test_rules_round_trip_through_plain_data() -> void:
-	var rules := LudoRulesConfig.snake()
+	var rules := LudoRulesConfig.classic()
 	rules.start_rolls = [1, 6] as Array[int]
 	rules.max_consecutive_sixes = 0
-	rules.snake_penalty = LudoRulesConfig.SnakePenalty.MOVE_BACK_STEPS
-	rules.snake_penalty_steps = 4
+	rules.blocks_enabled = true
 	var data := rules.to_dict()
 	var copy := LudoRulesConfig.from_dict(data)
 	assert_eq(copy.to_dict(), data, "round trip")
@@ -70,7 +70,7 @@ func test_rules_round_trip_through_plain_data() -> void:
 func test_invalid_rules_are_reported() -> void:
 	var rules := LudoRulesConfig.classic()
 	rules.start_rolls = [7] as Array[int]
-	rules.snake_penalty_steps = 0
+	rules.max_consecutive_sixes = -1
 	assert_eq(rules.validate().size(), 2, "two problems")
 	rules.start_rolls = [] as Array[int]
 	assert_true(rules.validate().size() >= 2, "empty start rolls")

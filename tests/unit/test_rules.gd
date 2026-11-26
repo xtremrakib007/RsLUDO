@@ -1,5 +1,5 @@
 extends "res://tests/test_case.gd"
-## Classic and Snake Ludo rules (LudoRules via LocalMatch).
+## Classic Ludo rules (LudoRules via LocalMatch).
 
 const FINISH := BoardLayout.FINISH_PROGRESS
 const BASE := MatchState.IN_BASE
@@ -304,92 +304,3 @@ func test_restart_resets_everything() -> void:
 	for seat in m.state.seats:
 		for pawn in BoardLayout.PAWNS_PER_PLAYER:
 			assert_eq(m.state.pawn_progress(seat, pawn), BASE, "seat %d pawn %d in base" % [seat, pawn])
-
-
-# --- Snake Ludo ---------------------------------------------------------
-
-func test_snake_mouths_are_on_ordinary_squares() -> void:
-	var snakes := SnakeLayout.standard()
-	assert_eq(snakes.snake_count(), 4)
-	for mouth in snakes.mouths:
-		assert_false(BoardLayout.is_safe_index(mouth), "mouth %d is not a safe square" % mouth)
-		for seat in BoardLayout.SEAT_COUNT:
-			assert_true(mouth != BoardLayout.home_entry_index(seat), "mouth %d is not a home entry" % mouth)
-
-
-func test_classic_mode_has_no_snakes() -> void:
-	assert_true(_new_match(4, ClassicMode.ID).snakes == null)
-	assert_not_null(_new_match(4, SnakeMode.ID).snakes)
-
-
-func test_landing_on_a_snake_mouth_bites() -> void:
-	var m := _new_match(4, SnakeMode.ID)
-	assert_true(m.snakes.is_mouth(6), "snake mouth at track 6")
-	m.state.set_pawn_progress(0, 0, 3)
-	_roll(m, 3)
-	var events := _move(m, 0)
-	assert_eq(GameEvent.count(events, GameEvent.Type.SNAKE_BITE), 1, "bitten on the mouth")
-	assert_eq(m.state.pawn_progress(0, 0), BASE, "default penalty: back to base")
-	assert_eq(m.state.current_seat(), 1, "turn passes")
-
-
-func test_passing_over_a_snake_is_safe() -> void:
-	var m := _new_match(4, SnakeMode.ID)
-	m.state.set_pawn_progress(0, 0, 3)
-	_roll(m, 5)
-	var events := _move(m, 0)
-	assert_eq(GameEvent.count(events, GameEvent.Type.SNAKE_BITE), 0, "walking past the mouth")
-	assert_eq(m.state.pawn_progress(0, 0), 8)
-
-
-func test_landing_on_a_snake_body_is_safe() -> void:
-	var m := _new_match(4, SnakeMode.ID)
-	m.state.set_pawn_progress(0, 0, 1)
-	_roll(m, 3)
-	var events := _move(m, 0)
-	assert_eq(m.state.pawn_progress(0, 0), 4, "track 4 is under the snake's body")
-	assert_eq(GameEvent.count(events, GameEvent.Type.SNAKE_BITE), 0)
-
-
-func test_same_square_does_not_bite_in_classic_mode() -> void:
-	var m := _new_match(4, ClassicMode.ID)
-	m.state.set_pawn_progress(0, 0, 3)
-	_roll(m, 3)
-	var events := _move(m, 0)
-	assert_eq(GameEvent.count(events, GameEvent.Type.SNAKE_BITE), 0)
-	assert_eq(m.state.pawn_progress(0, 0), 6)
-
-
-func test_snake_bite_cancels_the_extra_turn() -> void:
-	var m := _new_match(4, SnakeMode.ID)
-	m.state.set_pawn_progress(0, 0, 0)
-	_roll(m, 6)
-	var events := _move(m, 0)
-	assert_eq(GameEvent.count(events, GameEvent.Type.SNAKE_BITE), 1)
-	assert_eq(GameEvent.count(events, GameEvent.Type.EXTRA_TURN), 0, "no extra roll after a bite")
-	assert_eq(m.state.current_seat(), 1)
-
-
-func test_snake_bite_move_back_penalty() -> void:
-	var m := _new_match(4, SnakeMode.ID)
-	m.rules.snake_penalty = LudoRulesConfig.SnakePenalty.MOVE_BACK_STEPS
-	m.rules.snake_penalty_steps = 4
-	m.state.set_pawn_progress(0, 0, 3)
-	_roll(m, 3)
-	_move(m, 0)
-	assert_eq(m.state.pawn_progress(0, 0), 2, "6 - 4 = 2")
-
-
-func test_snake_bite_skip_turn_penalty() -> void:
-	var m := _new_match(2, SnakeMode.ID)
-	m.rules.snake_penalty = LudoRulesConfig.SnakePenalty.SKIP_NEXT_TURN
-	m.state.set_pawn_progress(0, 0, 3)
-	_roll(m, 3)
-	_move(m, 0)
-	assert_eq(m.state.pawn_progress(0, 0), 6, "pawn stays on the mouth")
-	assert_eq(m.state.current_seat(), 2)
-	var events := _roll(m, 2)
-	assert_eq(GameEvent.count(events, GameEvent.Type.TURN_SKIPPED), 1, "seat 0 misses its turn")
-	assert_eq(m.state.current_seat(), 2, "seat 2 plays again")
-	_roll(m, 2)
-	assert_eq(m.state.current_seat(), 0, "seat 0 is back after one missed turn")

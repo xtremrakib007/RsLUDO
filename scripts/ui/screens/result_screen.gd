@@ -48,7 +48,8 @@ func build() -> void:
 func _add_buttons(can_replay: bool) -> void:
 	if can_replay:
 		var again := UIKit.button("Play Again")
-		again.pressed.connect(SceneRouter.goto.bind("game"))
+		var mode := ModeRegistry.get_mode(AppState.match_config.mode_id)
+		again.pressed.connect(SceneRouter.goto.bind(mode.game_screen if mode != null else "home"))
 		content.add_child(again)
 	var home := UIKit.button("Home", UIKit.ButtonKind.SECONDARY)
 	home.pressed.connect(SceneRouter.goto.bind("home"))
