@@ -17,6 +17,7 @@ func _ready() -> void:
 	AppState.guest_name = "Guest 0427"
 
 	await _shot("home", out_dir, func() -> void: pass)
+	await _shot("settings", out_dir, func() -> void: pass)
 	AppState.pending_mode_id = SnakesLaddersMode.ID
 	await _shot("player_select", out_dir, func() -> void: pass)
 	AppState.match_config = MatchConfig.create(SnakesLaddersMode.ID, 4)
