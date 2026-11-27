@@ -140,7 +140,9 @@ func roll_to(result: int) -> void:
 	await t.finished
 	impact.emit(0.4)
 	_play_ripple(0.5)
-	await spin.finished
+	# The spin may already be over; only wait if it is still turning.
+	if spin.is_running():
+		await spin.finished
 
 	# Settle with a small springy wobble.
 	_cube.basis = Basis(_final_rotation)
