@@ -216,6 +216,35 @@ func _on_dice_pressed() -> void:
 	pass
 
 
+# --- Bots ---------------------------------------------------------------
+
+var _bot_rng := RandomNumberGenerator.new()
+
+
+func _is_bot(seat: int) -> bool:
+	return _config.is_bot(seat)
+
+
+## Waits like a person would: a varied pause, longer when `hard_choice`.
+## Never continues while the game is paused.
+func _bot_pause(hard_choice: bool = false) -> void:
+	var seconds := _bot_rng.randf_range(0.55, 1.1)
+	if hard_choice:
+		seconds += _bot_rng.randf_range(0.3, 0.8)
+	await _wait(seconds)
+	while is_paused():
+		await _wait(0.2)
+
+
+## The bot "taps" the dice: the same press bounce a finger gives.
+func _bot_tap_dice() -> void:
+	_stop_dice_pulse()
+	var tap := create_tween()
+	tap.tween_property(_dice_button, "scale", Vector2(0.88, 0.88), 0.08)
+	tap.tween_property(_dice_button, "scale", Vector2.ONE, 0.1)
+	await tap.finished
+
+
 func _animate_dice(value: int) -> void:
 	Sfx.play("dice", -4.0, 0.06)
 	await _dice.roll_to(value)

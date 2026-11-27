@@ -17,6 +17,10 @@ func _init(p_seat: int = 0, p_name: String = "", p_control: int = ControlType.LO
 	control_type = p_control
 
 
+func is_bot() -> bool:
+	return control_type == ControlType.COMPUTER
+
+
 func color() -> Color:
 	return Palette.seat_color(seat)
 

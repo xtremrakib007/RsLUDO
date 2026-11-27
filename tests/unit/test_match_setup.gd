@@ -30,7 +30,7 @@ func test_four_players_use_every_seat() -> void:
 
 
 func test_unsupported_setups_are_rejected() -> void:
-	assert_true(MatchConfig.create(ClassicMode.ID, 3) == null, "3 players not supported yet")
+	assert_true(MatchConfig.create(ClassicMode.ID, 5) == null, "5 players")
 	assert_true(MatchConfig.create(ClassicMode.ID, 1) == null, "1 player")
 	assert_true(MatchConfig.create("unknown", 2) == null, "unknown mode")
 

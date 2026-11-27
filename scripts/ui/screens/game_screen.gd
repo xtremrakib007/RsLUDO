@@ -34,8 +34,8 @@ func build() -> void:
 	resized.connect(_fit_board)
 	_fit_board()
 	board.sync(local_match.state)
-	_refresh_ui()
-	_start_dice_pulse()
+	_bot_rng.randomize()
+	_after_events()
 
 
 func _fit_board() -> void:
@@ -50,6 +50,13 @@ func _pausable() -> Node:
 # --- Turn flow ----------------------------------------------------------
 
 func _on_dice_pressed() -> void:
+	# Humans cannot roll for a bot.
+	if _is_bot(local_match.state.current_seat()):
+		return
+	_roll()
+
+
+func _roll() -> void:
 	if _busy or is_paused() or local_match.state.phase != MatchState.Phase.AWAITING_ROLL:
 		return
 	_busy = true
@@ -62,7 +69,7 @@ func _on_dice_pressed() -> void:
 
 
 func _on_pawn_tapped(seat: int, pawn: int) -> void:
-	if _busy or is_paused():
+	if _busy or is_paused() or _is_bot(seat):
 		return
 	for candidate in local_match.legal_moves():
 		if candidate.seat == seat and candidate.pawn == pawn:
@@ -86,10 +93,17 @@ func _after_events() -> void:
 	if state.phase == MatchState.Phase.GAME_OVER:
 		_finish_match(local_match.ranking())
 		return
+	var bot := _is_bot(state.current_seat())
 	if state.phase == MatchState.Phase.AWAITING_ROLL:
-		_start_dice_pulse()
+		if bot:
+			_bot_roll()
+		else:
+			_start_dice_pulse()
 		return
 	var moves := local_match.legal_moves()
+	if bot:
+		_bot_move(moves)
+		return
 	if _all_same_move(moves):
 		# Only one real choice: move it automatically.
 		_busy = true
@@ -100,6 +114,26 @@ func _after_events() -> void:
 	for candidate in moves:
 		ids.append(Vector2i(candidate.seat, candidate.pawn))
 	board.set_selectable(ids)
+
+
+## A bot's turn: think, tap the dice.
+func _bot_roll() -> void:
+	_busy = true
+	await _bot_pause()
+	await _bot_tap_dice()
+	_busy = false
+	_roll()
+
+
+## A bot chooses like a strong player, shows its pick for a moment, then moves.
+func _bot_move(moves: Array[LudoMove]) -> void:
+	_busy = true
+	var choice := LudoBot.choose_move(local_match.state, local_match.rules, moves, _bot_rng)
+	await _bot_pause(not _all_same_move(moves))
+	if not _all_same_move(moves):
+		board.set_selectable([Vector2i(choice.seat, choice.pawn)] as Array[Vector2i])
+		await _wait(0.35)
+	_perform_move(choice)
 
 
 ## True when every legal move ends the same way (e.g. several pawns in base and a six).
@@ -161,6 +195,9 @@ func _play_capture(seat: int, pawn: int, victim_seat: int, victim_pawn: int) -> 
 func _refresh_ui() -> void:
 	var state := local_match.state
 	_refresh_panels(state.current_seat(), state.phase == MatchState.Phase.GAME_OVER)
+	if _is_bot(state.current_seat()) and state.phase != MatchState.Phase.GAME_OVER:
+		_hint_label.text = "Thinking..."
+		return
 	match state.phase:
 		MatchState.Phase.AWAITING_ROLL:
 			_hint_label.text = "Tap the dice to roll"

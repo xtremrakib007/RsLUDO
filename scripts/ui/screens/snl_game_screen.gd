@@ -27,8 +27,9 @@ func build() -> void:
 	resized.connect(_fit_board)
 	_fit_board()
 	board.sync(snl_match.state)
+	_bot_rng.randomize()
 	_refresh_ui()
-	_start_dice_pulse()
+	_next_turn()
 
 
 func _subtitle() -> String:
@@ -50,6 +51,21 @@ func _pausable() -> Node:
 
 
 func _on_dice_pressed() -> void:
+	if _is_bot(snl_match.state.current_seat()):
+		return
+	_roll()
+
+
+## A bot's turn: think, tap the dice, roll.
+func _bot_roll() -> void:
+	_busy = true
+	await _bot_pause()
+	await _bot_tap_dice()
+	_busy = false
+	_roll()
+
+
+func _roll() -> void:
 	if _busy or is_paused() or snl_match.state.phase != SnlState.Phase.AWAITING_ROLL:
 		return
 	_busy = true
@@ -59,8 +75,14 @@ func _on_dice_pressed() -> void:
 	await _play_events(events)
 	_busy = false
 	_refresh_ui()
+	_next_turn()
+
+
+func _next_turn() -> void:
 	if snl_match.state.phase == SnlState.Phase.GAME_OVER:
 		_finish_match(snl_match.ranking())
+	elif _is_bot(snl_match.state.current_seat()):
+		_bot_roll()
 	else:
 		_start_dice_pulse()
 
@@ -102,7 +124,12 @@ func _play_events(events: Array[GameEvent]) -> void:
 func _refresh_ui() -> void:
 	var state := snl_match.state
 	_refresh_panels(state.current_seat(), state.phase == SnlState.Phase.GAME_OVER)
-	_hint_label.text = "Match over" if state.phase == SnlState.Phase.GAME_OVER else "Tap the dice to roll"
+	if state.phase == SnlState.Phase.GAME_OVER:
+		_hint_label.text = "Match over"
+	elif _is_bot(state.current_seat()):
+		_hint_label.text = "Thinking..."
+	else:
+		_hint_label.text = "Tap the dice to roll"
 
 
 func _panel_status(seat: int) -> String:
