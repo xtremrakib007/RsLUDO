@@ -166,7 +166,13 @@ func _dice_panel() -> Control:
 	_dice_button.focus_mode = Control.FOCUS_NONE
 	UIKit.style_button(_dice_button, Color(0, 0, 0, 0), Palette.TEXT, 0, 24)
 	_dice = Dice3DView.new()
+	# Larger than its button so the dice can jump without being cut off.
 	_dice.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_dice.offset_left = -70
+	_dice.offset_right = 70
+	_dice.offset_top = -100
+	_dice.offset_bottom = 40
+	_dice.impact.connect(func(strength: float) -> void: Sfx.play("dice_land", -6.0 - (1.0 - strength) * 8.0, 0.05))
 	_dice_button.add_child(_dice)
 	UIKit.ignore_mouse_recursive(_dice_button)
 	UIKit.add_press_feedback(_dice_button)
@@ -253,24 +259,45 @@ func _bot_tap_dice() -> void:
 func _animate_dice(value: int) -> void:
 	Sfx.play("dice", -6.0, 0.04)
 	await _dice.roll_to(value)
-	Sfx.play("dice_land", -6.0)
-	var pop := create_tween()
-	pop.tween_property(_dice, "scale", Vector2(1.12, 1.12), 0.08)
-	pop.tween_property(_dice, "scale", Vector2.ONE, 0.12)
-	await pop.finished
+	_show_rolled_number(value)
 
 
 func _start_dice_pulse() -> void:
-	_stop_dice_pulse()
-	_dice_pulse = create_tween().set_loops()
-	_dice_pulse.tween_property(_dice, "scale", Vector2(1.08, 1.08), 0.45).set_trans(Tween.TRANS_SINE)
-	_dice_pulse.tween_property(_dice, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_SINE)
+	_dice.set_waiting(true)
 
 
 func _stop_dice_pulse() -> void:
-	if _dice_pulse != null and _dice_pulse.is_valid():
-		_dice_pulse.kill()
-	_dice.scale = Vector2.ONE
+	_dice.set_waiting(false)
+
+
+## The rolled number pops up over the dice and floats away; a six gets a golden burst.
+func _show_rolled_number(value: int) -> void:
+	var centre := _dice_button.position + _dice_button.size * 0.5
+	var number := UIKit.title(str(value), 64, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+	number.add_theme_color_override("font_outline_color", Palette.seat_color(_dice_seat) if _dice_seat >= 0 else Palette.TEXT_DARK)
+	number.add_theme_constant_override("outline_size", 14)
+	number.size = Vector2(120, 80)
+	number.position = centre - Vector2(60, 110)
+	number.pivot_offset = number.size * 0.5
+	number.scale = Vector2(0.3, 0.3)
+	number.z_index = 30
+	add_child(number)
+	var t := create_tween()
+	t.tween_property(number, "scale", Vector2(1.2, 1.2), 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(number, "scale", Vector2.ONE, 0.08)
+	t.tween_interval(0.25)
+	t.tween_property(number, "position:y", number.position.y - 60.0, 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.parallel().tween_property(number, "modulate:a", 0.0, 0.4)
+	t.tween_callback(number.queue_free)
+	if value == 6:
+		Sfx.play("extra", -8.0)
+		var burst := CaptureEffect.create(CaptureEffect.Kind.CONFETTI, centre, centre + Vector2(0, -30), Color.WHITE, 60.0)
+		var ring := CaptureEffect.create(CaptureEffect.Kind.SHOCKWAVE, centre, centre, Palette.ACCENT, 45.0)
+		for effect in [burst, ring]:
+			add_child(effect)
+			var et := create_tween()
+			et.tween_property(effect, "progress", 1.0, 0.8)
+			et.tween_callback(effect.queue_free)
 
 
 # --- Messages and timing ------------------------------------------------

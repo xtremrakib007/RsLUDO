@@ -35,6 +35,8 @@ func _ready() -> void:
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 2)
 	await _shot("game", out_dir, _setup_choice, "game_classic_2p_choice")
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
+	await _shot("game", out_dir, _setup_dice_toss, "dice_toss", 0, 0.32)
+	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
 	_capture_style = CaptureAnimator.Style.BLASTER
 	await _shot("game", out_dir, _setup_capture, "capture_blaster", 0, 1.25)
 	AppState.match_config = MatchConfig.create(ClassicMode.ID, 4)
@@ -123,6 +125,13 @@ func _setup_snake_bite() -> void:
 	m.state.set_position(2, 12)
 	board.sync(m.state)
 	board.animate_slide(0, 54, 31)
+
+
+## Rolls a six so the picture catches the dice in the air.
+func _setup_dice_toss() -> void:
+	var m: LocalMatch = _current.get("local_match")
+	m.dice.queue_rolls([6] as Array[int])
+	_current.call("_on_dice_pressed")
 
 
 ## Two pawns that can move: shows the glowing choice.

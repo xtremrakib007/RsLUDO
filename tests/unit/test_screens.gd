@@ -70,7 +70,7 @@ func test_rolling_a_six_starts_a_pawn_on_screen() -> void:
 	local_match.dice.queue_rolls([6] as Array[int])
 	screen.call("_on_dice_pressed")
 	# Four equal choices (all pawns in base): the screen moves one automatically.
-	await _wait_seconds(2.5)
+	await _wait_seconds(3.2)
 	var started := 0
 	for pawn in BoardLayout.PAWNS_PER_PLAYER:
 		if local_match.state.pawn_progress(0, pawn) == 0:
@@ -96,7 +96,7 @@ func test_tapping_a_pawn_moves_it() -> void:
 	local_match.state.set_pawn_progress(0, 1, 20)
 	local_match.dice.queue_rolls([3] as Array[int])
 	screen.call("_on_dice_pressed")
-	await _wait_seconds(1.5)
+	await _wait_seconds(2.0)
 	assert_eq(local_match.state.phase, MatchState.Phase.AWAITING_MOVE, "two different moves: player must choose")
 	var board: BoardView = screen.get("board")
 	assert_true(board.pawn_node(0, 1).highlighted, "movable pawn glows")
@@ -145,7 +145,7 @@ func test_snakes_and_ladders_screen_plays_a_ladder() -> void:
 	assert_eq(board.pawn_count(), 2, "one pawn per player")
 	snl_match.dice.queue_rolls([3] as Array[int])
 	screen.call("_on_dice_pressed")
-	await _wait_seconds(3.5)
+	await _wait_seconds(4.2)
 	assert_eq(snl_match.state.position_of(0), 22, "rolled 3 onto the ladder 3 -> 22")
 	assert_eq(snl_match.state.current_seat(), 2, "turn passed")
 	var pawn_position := board.pawn_node(0).position
