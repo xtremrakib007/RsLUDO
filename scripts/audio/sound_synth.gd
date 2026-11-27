@@ -15,14 +15,13 @@ enum Wave { SINE, SQUARE, SAW, TRIANGLE, NOISE }
 const RECIPES := {
 	"click": [[Wave.SINE, 1100, 900, 0.0, 0.045, 0.35, 0.002]],
 	"step": [[Wave.SINE, 260, 170, 0.0, 0.07, 0.35, 0.003], [Wave.NOISE, 0, 0, 0.0, 0.04, 0.12, 0.001, 0.25]],
-	# Soft wooden rattle: low-passed taps, gentle attack.
+	# Smooth, soft roll: a muffled swell with a few gentle wooden knocks.
 	"dice": [
-		[Wave.NOISE, 0, 0, 0.00, 0.05, 0.22, 0.004, 0.3], [Wave.NOISE, 0, 0, 0.10, 0.05, 0.2, 0.004, 0.28],
-		[Wave.NOISE, 0, 0, 0.19, 0.05, 0.18, 0.004, 0.3], [Wave.NOISE, 0, 0, 0.30, 0.05, 0.15, 0.004, 0.26],
-		[Wave.NOISE, 0, 0, 0.42, 0.05, 0.12, 0.004, 0.28], [Wave.NOISE, 0, 0, 0.55, 0.05, 0.09, 0.004, 0.26],
-		[Wave.SINE, 520, 420, 0.0, 0.05, 0.08, 0.003], [Wave.SINE, 480, 400, 0.19, 0.05, 0.06, 0.003],
+		[Wave.NOISE, 0, 0, 0.00, 0.55, 0.16, 0.18, 0.06],
+		[Wave.SINE, 360, 300, 0.06, 0.07, 0.1, 0.012], [Wave.SINE, 340, 290, 0.21, 0.07, 0.08, 0.012],
+		[Wave.SINE, 330, 280, 0.36, 0.07, 0.06, 0.012],
 	],
-	"dice_land": [[Wave.SINE, 130, 70, 0.0, 0.14, 0.35, 0.004], [Wave.NOISE, 0, 0, 0.0, 0.06, 0.12, 0.003, 0.2]],
+	"dice_land": [[Wave.SINE, 120, 85, 0.0, 0.18, 0.22, 0.012], [Wave.NOISE, 0, 0, 0.0, 0.1, 0.06, 0.01, 0.08]],
 	"dice_move": [[Wave.NOISE, 0, 0, 0.0, 0.3, 0.18, 0.12, 0.35]],
 	"charge": [[Wave.SINE, 180, 1300, 0.0, 0.45, 0.35, 0.05], [Wave.TRIANGLE, 360, 2600, 0.0, 0.45, 0.12, 0.05]],
 	"zap": [[Wave.SQUARE, 1500, 180, 0.0, 0.35, 0.3, 0.005], [Wave.SAW, 900, 120, 0.0, 0.3, 0.2, 0.005], [Wave.NOISE, 0, 0, 0.0, 0.15, 0.2, 0.002, 0.8]],

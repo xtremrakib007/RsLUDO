@@ -4,7 +4,7 @@ extends MatchScreen
 
 const AUTO_MOVE_DELAY := 0.3
 ## Space used by everything except the board (header, player rows, dice panel, gaps, margins).
-const NON_BOARD_HEIGHT := 680.0
+const NON_BOARD_HEIGHT := 520.0
 
 var board: BoardView
 var local_match: LocalMatch

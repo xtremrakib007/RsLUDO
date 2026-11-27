@@ -55,7 +55,10 @@ func _finish_setup() -> void:
 
 
 func _subtitle() -> String:
-	return "%d players - pass and play" % _config.player_count()
+	var bots := _config.bot_count()
+	if bots == 0:
+		return "%d players - pass and play" % _config.player_count()
+	return "%d players - %d %s" % [_config.player_count(), bots, "bot" if bots == 1 else "bots"]
 
 
 # --- Player panels ------------------------------------------------------
@@ -140,9 +143,11 @@ func _name(seat: int) -> String:
 
 # --- Dice ---------------------------------------------------------------
 
-## The turn/hint card. The dice itself floats beside the current player's card.
+## Creates the dice. Whose turn it is shows on the player cards and by where the
+## dice sits, so the old turn/hint card is kept hidden.
 func _dice_panel() -> Control:
 	var panel := UIKit.card(Palette.PANEL, 28, 16)
+	panel.visible = false
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 20)
 	var texts := VBoxContainer.new()
@@ -246,9 +251,9 @@ func _bot_tap_dice() -> void:
 
 
 func _animate_dice(value: int) -> void:
-	Sfx.play("dice", -4.0, 0.06)
+	Sfx.play("dice", -6.0, 0.04)
 	await _dice.roll_to(value)
-	Sfx.play("dice_land", -4.0)
+	Sfx.play("dice_land", -6.0)
 	var pop := create_tween()
 	pop.tween_property(_dice, "scale", Vector2(1.12, 1.12), 0.08)
 	pop.tween_property(_dice, "scale", Vector2.ONE, 0.12)
